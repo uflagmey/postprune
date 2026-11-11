@@ -22,7 +22,10 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 ### Installation
 
-1. Das Paket entpacken und den Ordner `uflagmey/postprune/` nach `ext/` hochladen, so dass `ext/uflagmey/postprune/ext.php` existiert.
+> **Download:** [Release v1.0.0-beta1](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta1) → Datei `postprune-1.0.0-beta1.zip` (alle Versionen: [Releases](https://github.com/uflagmey/postprune/releases)).
+> **Nicht** über „Code → Download ZIP“ installieren: Das ist der Quellcode mit falscher Ordnerstruktur (`postprune-main/`) und kein Installationspaket.
+
+1. Das Release-ZIP entpacken und den Ordner `uflagmey/postprune/` nach `ext/` hochladen, so dass `ext/uflagmey/postprune/ext.php` existiert.
 2. Im ACP unter **Anpassen → Erweiterungen verwalten** „Post Prune“ aktivieren.
 3. Damit ist noch nichts eingeschaltet: Alle Foren stehen auf **Aus**.
 
@@ -80,7 +83,10 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 
 ### Installation
 
-1. Unpack the package and upload the folder `uflagmey/postprune/` to `ext/`, so that `ext/uflagmey/postprune/ext.php` exists.
+> **Download:** [Release v1.0.0-beta1](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta1) → file `postprune-1.0.0-beta1.zip` (all versions: [Releases](https://github.com/uflagmey/postprune/releases)).
+> Do **not** install from “Code → Download ZIP”: that is the source code with the wrong folder layout (`postprune-main/`), not an installation package.
+
+1. Unpack the release ZIP and upload the folder `uflagmey/postprune/` to `ext/`, so that `ext/uflagmey/postprune/ext.php` exists.
 2. In the ACP go to **Customise → Manage extensions** and enable “Post Prune”.
 3. Nothing is switched on yet: every forum starts in mode **Off**.
 

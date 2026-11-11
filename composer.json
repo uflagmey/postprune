@@ -2,7 +2,7 @@
 	"name": "uflagmey/postprune",
 	"type": "phpbb-extension",
 	"description": "Automatically hard-deletes individual posts (including attachments) older than N days in selected forums.",
-	"homepage": "https://www.phpbb.de/community/viewtopic.php?t=248190",
+	"homepage": "https://github.com/uflagmey/postprune",
 	"version": "1.0.0-beta1",
 	"time": "2026-11-11",
 	"license": "GPL-2.0-only",
@@ -12,6 +12,11 @@
 			"role": "Lead Developer"
 		}
 	],
+	"support": {
+		"issues": "https://github.com/uflagmey/postprune/issues",
+		"source": "https://github.com/uflagmey/postprune",
+		"forum": "https://www.phpbb.de/community/viewtopic.php?t=248190"
+	},
 	"require": {
 		"php": ">=7.2.0"
 	},
