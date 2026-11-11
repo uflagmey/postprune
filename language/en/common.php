@@ -58,4 +58,14 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_QM_ALREADY_MARKED'		=> 'The topic is already marked for automatic pruning.',
 	'UFLAGMEY_PP_QM_NOT_MARKED'			=> 'The topic is not marked for automatic pruning.',
 	'UFLAGMEY_PP_QM_NOT_POSSIBLE'		=> 'This topic cannot be marked for automatic pruning.',
+	'UFLAGMEY_PP_NOTICE'				=> [
+		1	=> 'Posts in this topic older than %d day are deleted automatically.',
+		2	=> 'Posts in this topic older than %d days are deleted automatically.',
+	],
+	'UFLAGMEY_PP_NOTICE_KEEP_FIRST'		=> 'The first post is kept.',
+	'UFLAGMEY_PP_NOTICE_DRYRUN'			=> [
+		1	=> 'Dry run active: posts in this topic older than %d day would be deleted. Only visible to administrators.',
+		2	=> 'Dry run active: posts in this topic older than %d days would be deleted. Only visible to administrators.',
+	],
+	'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN'	=> 'The first post would be kept.',
 ]);

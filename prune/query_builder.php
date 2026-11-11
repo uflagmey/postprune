@@ -180,6 +180,25 @@ class query_builder
 	}
 
 	/**
+	 * Does topic_where() hold for one topic? (topic notice; same rule as the cron)
+	 *
+	 * @param array	$forum		Forum settings (forum_id + uflagmey_pp_* incl. scope if available)
+	 * @param int	$topic_id
+	 * @return array
+	 */
+	public function topic_applies_query(array $forum, $topic_id)
+	{
+		$where = 't.topic_id = ' . (int) $topic_id . '
+			AND ' . $this->topic_where($forum);
+
+		return [
+			'SELECT'	=> 't.topic_id',
+			'FROM'		=> [$this->topics_table => 't'],
+			'WHERE'		=> $where,
+		];
+	}
+
+	/**
 	 * Number of marked topics of a forum (logs for scope "marked topics only").
 	 * Fixed rule: the topic count in the DRYRUN/PRUNED_TOPIC(S) log entries is
 	 * the number of MARKED topics in the forum, whether or not each of them has

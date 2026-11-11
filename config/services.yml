@@ -26,6 +26,8 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '@template'
+            - '@uflagmey.postprune.query_builder'
         tags:
             - { name: event.listener }
 

@@ -11,10 +11,12 @@
 namespace uflagmey\postprune\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use uflagmey\postprune\prune\query_builder;
 use uflagmey\postprune\prune\schema;
 
 /**
- * Topic mark ("prune this topic"): quick-mod switch in the topic view for
+ * Topic notice "old posts here are deleted automatically", and the
+ * topic mark ("prune this topic"): quick-mod switch in the topic view for
  * administrators with a_forum, and removal of the mark when a topic leaves
  * its forum (MCP move, ACP user "move posts", ACP forum delete/convert with
  * moving the content).
@@ -57,6 +59,12 @@ class topic_listener implements EventSubscriberInterface
 	/** @var string */
 	protected $php_ext;
 
+	/** @var \phpbb\template\template */
+	protected $template;
+
+	/** @var query_builder */
+	protected $query_builder;
+
 	/** @var array Marked topics of a forum whose content is being moved in the ACP */
 	protected $moving = [];
 
@@ -72,9 +80,13 @@ class topic_listener implements EventSubscriberInterface
 	 * @param string							$forums_table
 	 * @param string							$root_path
 	 * @param string							$php_ext
+	 * @param \phpbb\template\template			$template
+	 * @param query_builder						$query_builder
 	 */
-	public function __construct(\phpbb\auth\auth $auth, \phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\language\language $language, \phpbb\log\log_interface $log, \phpbb\request\request_interface $request, \phpbb\user $user, $topics_table, $forums_table, $root_path, $php_ext)
+	public function __construct(\phpbb\auth\auth $auth, \phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\language\language $language, \phpbb\log\log_interface $log, \phpbb\request\request_interface $request, \phpbb\user $user, $topics_table, $forums_table, $root_path, $php_ext, \phpbb\template\template $template, query_builder $query_builder)
 	{
+		$this->template = $template;
+		$this->query_builder = $query_builder;
 		$this->auth = $auth;
 		$this->config = $config;
 		$this->db = $db;
@@ -92,6 +104,7 @@ class topic_listener implements EventSubscriberInterface
 	{
 		return [
 			'core.viewtopic_add_quickmod_option_before'		=> 'add_quickmod_option',
+			'core.viewtopic_assign_template_vars_before'	=> 'topic_notice',
 			'core.mcp_modify_permissions'					=> 'mcp_permissions',
 			'core.modify_quickmod_options'					=> 'quickmod_action',
 			'core.move_topics_before_query'					=> 'move_topics',
@@ -120,6 +133,49 @@ class topic_listener implements EventSubscriberInterface
 		$quickmod_array = $event['quickmod_array'];
 		$quickmod_array[$marked ? self::ACTION_UNMARK : self::ACTION_MARK] = [$marked ? 'UFLAGMEY_PP_QM_UNMARK' : 'UFLAGMEY_PP_QM_MARK', true];
 		$event['quickmod_array'] = $quickmod_array;
+	}
+
+	/**
+	 * Notice below the topic title: in Active mode for everybody, in Dry run mode
+	 * only for administrators with a_forum. Whether the topic is affected is
+	 * decided by query_builder::topic_where(), the same rule the cron uses.
+	 *
+	 * @param \phpbb\event\data $event
+	 */
+	public function topic_notice($event)
+	{
+		$topic = $event['topic_data'];
+		$mode = (int) $topic['uflagmey_pp_mode'];
+		if (!schema::topic_scope($this->config) || (int) $topic['forum_type'] !== FORUM_POST
+			|| ($mode !== query_builder::MODE_ACTIVE && $mode !== query_builder::MODE_DRYRUN)
+			|| ($mode === query_builder::MODE_DRYRUN && !$this->auth->acl_get('a_forum')))
+		{
+			return;
+		}
+
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->topic_applies_query($topic, (int) $event['topic_id']));
+		$result = $this->db->sql_query($sql);
+		$applies = (bool) $this->db->sql_fetchfield('topic_id');
+		$this->db->sql_freeresult($result);
+
+		if (!$applies)
+		{
+			return;
+		}
+
+		$this->language->add_lang('common', 'uflagmey/postprune');
+		$days = (int) $topic['uflagmey_pp_days'];
+		$dryrun = ($mode === query_builder::MODE_DRYRUN);
+		$text = $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_DRYRUN' : 'UFLAGMEY_PP_NOTICE', $days);
+		if (!empty($topic['uflagmey_pp_keep_first']))
+		{
+			$text .= ' ' . $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN' : 'UFLAGMEY_PP_NOTICE_KEEP_FIRST');
+		}
+
+		$this->template->assign_vars([
+			'UFLAGMEY_PP_NOTICE'			=> $text,
+			'S_UFLAGMEY_PP_NOTICE_DRYRUN'	=> $dryrun,
+		]);
 	}
 
 	/**

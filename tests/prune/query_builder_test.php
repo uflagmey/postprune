@@ -244,4 +244,32 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(2, (int) $db->sql_fetchfield('num_topics'));
 		$db->sql_freeresult($result);
 	}
+
+	public function test_topic_applies_query_uses_the_same_rule_as_the_candidates()
+	{
+		$db = fixtures::db();
+		fixtures::topic($db, 1, 10, [100 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 11, [110 => 1], POST_STICKY, ['uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 12, [120 => 1]);
+		fixtures::topic($db, 1, 13, [130 => 1], POST_STICKY);
+		fixtures::topic($db, 2, 20, [200 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		$qb = fixtures::query_builder();
+		$applies = function (array $forum) use ($db, $qb) {
+			$ids = [];
+			foreach ([10, 11, 12, 13, 20] as $tid)
+			{
+				$result = $db->sql_query($db->sql_build_query('SELECT', $qb->topic_applies_query($forum, $tid)));
+				if ($db->sql_fetchfield('topic_id'))
+				{
+					$ids[] = $tid;
+				}
+				$db->sql_freeresult($result);
+			}
+			return $ids;
+		};
+		$this->assertSame([10, 11], $applies(['forum_id' => 1, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_skip_sticky' => 1]), 'scope 1: marked, sticky included');
+		$this->assertSame([10, 12], $applies(['forum_id' => 1, 'uflagmey_pp_scope' => 0, 'uflagmey_pp_skip_sticky' => 1]), 'scope 0 + skip_sticky');
+		$this->assertSame([10, 11, 12, 13], $applies(['forum_id' => 1, 'uflagmey_pp_skip_sticky' => 0]), 'scope 0, all topics');
+		$this->assertStringContainsString($qb->topic_where(['forum_id' => 1, 'uflagmey_pp_scope' => 1]), $qb->topic_applies_query(['forum_id' => 1, 'uflagmey_pp_scope' => 1], 10)['WHERE']);
+	}
 }

@@ -58,4 +58,14 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_QM_ALREADY_MARKED'		=> 'Das Thema ist bereits zum automatischen Kürzen markiert.',
 	'UFLAGMEY_PP_QM_NOT_MARKED'			=> 'Das Thema ist nicht zum automatischen Kürzen markiert.',
 	'UFLAGMEY_PP_QM_NOT_POSSIBLE'		=> 'Dieses Thema kann nicht zum automatischen Kürzen markiert werden.',
+	'UFLAGMEY_PP_NOTICE'				=> [
+		1	=> 'Beiträge in diesem Thema, die älter als %d Tag sind, werden automatisch gelöscht.',
+		2	=> 'Beiträge in diesem Thema, die älter als %d Tage sind, werden automatisch gelöscht.',
+	],
+	'UFLAGMEY_PP_NOTICE_KEEP_FIRST'		=> 'Der erste Beitrag bleibt erhalten.',
+	'UFLAGMEY_PP_NOTICE_DRYRUN'			=> [
+		1	=> 'Trockenlauf aktiv: Beiträge in diesem Thema, die älter als %d Tag sind, würden gelöscht. Nur für Administratoren sichtbar.',
+		2	=> 'Trockenlauf aktiv: Beiträge in diesem Thema, die älter als %d Tage sind, würden gelöscht. Nur für Administratoren sichtbar.',
+	],
+	'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN'	=> 'Der erste Beitrag bliebe erhalten.',
 ]);
