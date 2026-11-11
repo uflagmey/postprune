@@ -1,0 +1,3 @@
+# Excluded from the release package built with git archive (kept in the repo).
+tests/ export-ignore
+.gitattributes export-ignore

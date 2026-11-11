@@ -64,7 +64,7 @@ class query_builder
 			'SELECT'	=> 'f.forum_id, f.forum_name, f.uflagmey_pp_mode, f.uflagmey_pp_days, f.uflagmey_pp_keep_first, f.uflagmey_pp_skip_sticky, f.uflagmey_pp_count_sync',
 			'FROM'		=> [$this->forums_table => 'f'],
 			'WHERE'		=> 'f.uflagmey_pp_mode > ' . self::MODE_OFF . '
-				AND f.forum_type = ' . $this->forum_post,
+				AND f.forum_type = ' . (int) $this->forum_post,
 			'ORDER_BY'	=> 'f.forum_id ASC',
 		];
 	}
