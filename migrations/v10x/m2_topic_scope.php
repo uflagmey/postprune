@@ -13,12 +13,14 @@ namespace uflagmey\postprune\migrations\v10x;
 /**
  * beta3: per-forum scope (whole forum / marked topics only) and the topic mark.
  * Existing forum settings stay untouched; scope starts at 0 (whole forum, as before).
+ * The config value uflagmey_pp_schema tells the code that these columns exist (see prune\schema).
  */
 class m2_topic_scope extends \phpbb\db\migration\migration
 {
 	public function effectively_installed()
 	{
-		return $this->db_tools->sql_column_exists($this->table_prefix . 'forums', 'uflagmey_pp_scope')
+		return isset($this->config['uflagmey_pp_schema'])
+			&& $this->db_tools->sql_column_exists($this->table_prefix . 'forums', 'uflagmey_pp_scope')
 			&& $this->db_tools->sql_column_exists($this->table_prefix . 'topics', 'uflagmey_pp_marked');
 	}
 
@@ -52,6 +54,14 @@ class m2_topic_scope extends \phpbb\db\migration\migration
 					'uflagmey_pp_marked',
 				],
 			],
+		];
+	}
+
+	public function update_data()
+	{
+		// config.add is reverted (removed) automatically on revert/purge.
+		return [
+			['config.add', ['uflagmey_pp_schema', 2]],
 		];
 	}
 }

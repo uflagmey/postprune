@@ -36,4 +36,5 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_COUNT_SYNC_EXPLAIN'	=> 'Wenn aktiviert, wird der Beitragszähler des Verfassers für jeden gelöschten Beitrag reduziert. Standard ist Nein, wie beim Themen-Pruning von phpBB.',
 	'UFLAGMEY_PP_ERR_MODE'				=> 'Beitrags-Pruning: Ungültiger Modus.',
 	'UFLAGMEY_PP_ERR_DAYS'				=> 'Beitrags-Pruning: Das Alter der Beiträge muss zwischen 1 und %d Tagen liegen.',
+	'UFLAGMEY_PP_UPDATE_PENDING'		=> 'Das Update von Post Prune ist noch nicht abgeschlossen. Bitte die Erweiterung einmal deaktivieren und wieder aktivieren (ACP » Anpassen » Erweiterungen verwalten), um das Update abzuschließen. Die Einstellungen bleiben dabei erhalten. Bis dahin arbeitet die Erweiterung wie in der Vorversion.',
 ]);

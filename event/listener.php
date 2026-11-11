@@ -11,6 +11,7 @@
 namespace uflagmey\postprune\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use uflagmey\postprune\prune\schema;
 
 /**
  * Adds the per-forum post prune settings to ACP > Forums > Edit forum.
@@ -26,14 +27,22 @@ class listener implements EventSubscriberInterface
 	/** @var \phpbb\request\request_interface */
 	protected $request;
 
+	/** @var \phpbb\config\config|null */
+	protected $config;
+
 	/**
+	 * New arguments are optional and appended: after an upload over an active
+	 * older version, phpBB may still run the old container with the old arguments.
+	 *
 	 * @param \phpbb\language\language			$language
 	 * @param \phpbb\request\request_interface	$request
+	 * @param \phpbb\config\config|null			$config
 	 */
-	public function __construct(\phpbb\language\language $language, \phpbb\request\request_interface $request)
+	public function __construct(\phpbb\language\language $language, \phpbb\request\request_interface $request, ?\phpbb\config\config $config = null)
 	{
 		$this->language = $language;
 		$this->request = $request;
+		$this->config = $config;
 	}
 
 	public static function getSubscribedEvents()
@@ -139,6 +148,7 @@ class listener implements EventSubscriberInterface
 			'S_UFLAGMEY_PP_KEEP_FIRST'	=> (bool) $data['uflagmey_pp_keep_first'],
 			'S_UFLAGMEY_PP_SKIP_STICKY'	=> (bool) $data['uflagmey_pp_skip_sticky'],
 			'S_UFLAGMEY_PP_COUNT_SYNC'	=> (bool) $data['uflagmey_pp_count_sync'],
+			'S_UFLAGMEY_PP_UPDATE_PENDING'	=> !schema::topic_scope($this->config),
 		]);
 	}
 }

@@ -36,4 +36,5 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_COUNT_SYNC_EXPLAIN'	=> 'If enabled, the post count of each author is reduced for every deleted post. Default is No, like phpBB’s own topic pruning.',
 	'UFLAGMEY_PP_ERR_MODE'				=> 'Post pruning: invalid mode.',
 	'UFLAGMEY_PP_ERR_DAYS'				=> 'Post pruning: the post age must be between 1 and %d days.',
+	'UFLAGMEY_PP_UPDATE_PENDING'		=> 'The Post Prune update is not complete yet. Please disable the extension once and enable it again (ACP » Customise » Manage extensions) to complete the update. Your settings are kept. Until then the extension works as in the previous version.',
 ]);
