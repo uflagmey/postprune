@@ -16,7 +16,7 @@ namespace uflagmey\postprune;
 class ext extends \phpbb\extension\base
 {
 	/**
-	 * Requires phpBB 3.3.x and PHP 7.2 or newer.
+	 * Requires phpBB 3.3.3 or newer (3.3.x) and PHP 7.2 or newer.
 	 *
 	 * @return bool
 	 */
@@ -24,7 +24,7 @@ class ext extends \phpbb\extension\base
 	{
 		$config = $this->container->get('config');
 
-		return phpbb_version_compare($config['version'], '3.3.0', '>=')
+		return phpbb_version_compare($config['version'], '3.3.3', '>=')
 			&& phpbb_version_compare($config['version'], '4.0.0-dev', '<')
 			&& version_compare(PHP_VERSION, '7.2.0', '>=');
 	}
