@@ -40,7 +40,7 @@ Deinstallation: Erweiterung deaktivieren und anschließend **Daten löschen**. D
    - Ist der Modus im Forum wirklich gespeichert (Formular mit „Absenden“ bestätigt)?
    - Ist das Forum ein normales Beitragsforum (keine Kategorie, kein Link)?
    - Steht unter *Allgemein → Server-Konfiguration → Server und Domain* „Wiederkehrende Aufgaben über Cron-Job des Betriebssystems ausführen“ auf **Deaktiviert**? Ist es aktiviert, startet phpBB keine Aufgaben über Seitenaufrufe, dann braucht es einen System-Cronjob (siehe unten).
-   - In 1.0.0-beta1 schreibt der Trockenlauf **nur dann** einen Eintrag, wenn es mindestens einen Kandidaten gibt. Sind keine Beiträge alt genug, erscheint kein Eintrag.
+   - Der Trockenlauf schreibt pro abgeschlossenem Zyklus **immer** einen Eintrag, auch wenn kein Beitrag alt genug ist („… würde kein Beitrag gelöscht“). Fehlt dieser Eintrag, ist der Cron noch nicht gelaufen. (In 1.0.0-beta1 gab es bei 0 Kandidaten noch keinen Eintrag.)
 
 ### Einstellungen pro Forum
 
@@ -65,7 +65,7 @@ Ungeprüfte und soft-gelöschte Beiträge werden ebenfalls nach Alter gelöscht.
 ### Wann läuft das Pruning?
 
 - Der Cron-Task `uflagmey.postprune.cron.task.prune` läuft standardmäßig einmal täglich (`uflagmey_pp_gc`, 86400 Sekunden).
-- Pro Lauf werden über alle Foren höchstens **200 Beiträge** gelöscht (`uflagmey_pp_batch`), damit es auf Shared Hosting keine Timeouts gibt. Ist mehr zu tun, läuft der Task bei den nächsten Seitenaufrufen weiter, bis der Rückstand abgearbeitet ist. Trockenlauf-Foren zählen dabei nicht mit und werden einmal pro Zyklus protokolliert.
+- Pro Lauf werden über alle Foren höchstens **200 Beiträge** gelöscht (`uflagmey_pp_batch`), damit es auf Shared Hosting keine Timeouts gibt. Ist mehr zu tun, läuft der Task bei den nächsten Seitenaufrufen weiter, bis der Rückstand abgearbeitet ist. Trockenlauf-Foren zählen dabei nicht mit und werden einmal pro Zyklus protokolliert, auch mit 0 Kandidaten.
 - **Der phpBB-Cron hängt an Seitenaufrufen.** Ohne Besucher läuft nichts. Optional: Im ACP unter *Allgemein → Server-Konfiguration → Server und Domain* „Wiederkehrende Aufgaben über Cron-Job des Betriebssystems ausführen“ aktivieren und `php bin/phpbbcli.php cron:run` regelmäßig (z. B. alle 5 Minuten) per Cronjob ausführen.
 - Einmalig von Hand: `php bin/phpbbcli.php cron:run uflagmey.postprune.cron.task.prune`
   **Hinweis:** `cron:run` mit Task-Namen **ignoriert `should_run()`**, also das Tagesintervall. Der Task läuft dann sofort, unabhängig vom letzten Lauf, und schreibt bei Trockenlauf-Foren erneut einen Protokolleintrag.
@@ -112,7 +112,7 @@ Uninstall: disable the extension, then **Delete data**. This removes the extensi
    - Is the mode really saved for the forum (form confirmed with “Submit”)?
    - Is the forum a normal forum (not a category, not a link)?
    - Is “Run periodic tasks from operating system cron” under *General → Server configuration → Server settings* set to **Disabled**? If it is enabled, phpBB does not start tasks on page requests, so you need a system cron job (see below).
-   - In 1.0.0-beta1 the dry run writes an entry **only** if there is at least one candidate. If no post is old enough, no entry appears.
+   - The dry run **always** writes one entry per completed cycle, even if no post is old enough (“No posts … would be deleted”). If that entry is missing, the cron has not run yet. (In 1.0.0-beta1 there was no entry with 0 candidates.)
 
 ### Settings per forum
 
@@ -137,7 +137,7 @@ Unapproved and soft-deleted posts are deleted by age as well. The board statisti
 ### When does pruning run?
 
 - The cron task `uflagmey.postprune.cron.task.prune` runs once a day by default (`uflagmey_pp_gc`, 86400 seconds).
-- Each run deletes at most **200 posts** across all forums (`uflagmey_pp_batch`) to avoid timeouts on shared hosting. If there is more to do, the task continues on the next page requests until the backlog is gone. Dry-run forums do not count towards that limit and are logged once per cycle.
+- Each run deletes at most **200 posts** across all forums (`uflagmey_pp_batch`) to avoid timeouts on shared hosting. If there is more to do, the task continues on the next page requests until the backlog is gone. Dry-run forums do not count towards that limit and are logged once per cycle, even with 0 candidates.
 - **phpBB's cron is triggered by page requests.** No visitors, no run. Optionally enable “Run periodic tasks from operating system cron” in the ACP (*General → Server configuration → Server settings*) and run `php bin/phpbbcli.php cron:run` regularly (e.g. every 5 minutes) from a cron job.
 - One-off by hand: `php bin/phpbbcli.php cron:run uflagmey.postprune.cron.task.prune`
   **Note:** `cron:run` with a task name **ignores `should_run()`**, i.e. the daily interval. The task runs immediately regardless of the last run, and dry-run forums get another log entry.

@@ -164,6 +164,41 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN', ['F1', 5]], $last);
 	}
 
+	public function test_dry_run_logs_zero_candidates()
+	{
+		fixtures::forum($this->db, 1, 'A', FORUM_POST, ['uflagmey_pp_mode' => 1]);
+		fixtures::topic($this->db, 1, 10, [100 => 90, 101 => 5]);
+		$result = $this->pruner()->run(fixtures::NOW, 6);
+
+		$this->assertFalse($result['backlog']);
+		$this->assertSame([1 => 0], $result['dryrun']);
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN', ['A', 0]]], $this->logs, 'entry even with 0 candidates');
+		$this->assertSame([], fixtures::$delete_calls);
+	}
+
+	public function test_zero_candidate_dry_run_still_waits_for_closing_run()
+	{
+		$this->seed([1 => 2, 2 => 2, 3 => 2]);
+		fixtures::forum($this->db, 4, 'D0', FORUM_POST, ['uflagmey_pp_mode' => 1]);
+		fixtures::topic($this->db, 4, 40, [400 => 5]);
+		$pruner = $this->pruner();
+		$dry_per_run = [];
+		do
+		{
+			$before = count($this->logs);
+			$result = $pruner->run(fixtures::NOW, 6);
+			$dry = array_values(array_filter(array_slice($this->logs, $before), function ($l) {
+				return $l[2] === 'LOG_UFLAGMEY_PP_DRYRUN';
+			}));
+			$dry_per_run[] = array_map(function ($l) {
+				return $l[3];
+			}, $dry);
+		}
+		while ($result['backlog'] && count($dry_per_run) < 10);
+
+		$this->assertSame([[], [], [], [['D0', 0]]], $dry_per_run);
+	}
+
 	public function test_pruned_log_entry()
 	{
 		$this->seed([2 => 2]);

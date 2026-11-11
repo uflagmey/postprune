@@ -77,7 +77,8 @@ class pruner
 	 * One cron run. Active forums are processed first, oldest posts first, at
 	 * most $batch posts in total. Dry-run forums are only counted and logged
 	 * when no backlog is left, so a backlog that is worked off over several
-	 * page requests produces exactly one dry-run log entry per cycle.
+	 * page requests produces exactly one dry-run log entry per cycle. That
+	 * entry is written even with 0 candidates, as proof that the cron ran.
 	 *
 	 * @param int	$now
 	 * @param int	$batch	Maximum number of posts to delete in this run
@@ -139,11 +140,7 @@ class pruner
 				$this->db->sql_freeresult($result);
 
 				$dryrun[(int) $forum['forum_id']] = $num;
-
-				if ($num)
-				{
-					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN', $forum['forum_name'], $num);
-				}
+				$this->add_log('LOG_UFLAGMEY_PP_DRYRUN', $forum['forum_name'], $num);
 			}
 		}
 

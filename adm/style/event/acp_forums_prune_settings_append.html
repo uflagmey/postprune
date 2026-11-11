@@ -3,29 +3,29 @@
 			<legend>{{ lang('UFLAGMEY_PP_SETTINGS') }}</legend>
 			<p>{{ lang('UFLAGMEY_PP_SETTINGS_EXPLAIN') }}</p>
 		<dl>
-			<dt><label for="uflagmey_pp_mode">{{ lang('UFLAGMEY_PP_MODE') ~ lang('COLON') }}</label><br /><span>{{ lang('UFLAGMEY_PP_MODE_EXPLAIN') }}</span></dt>
+			<dt><label for="uflagmey_pp_mode">{{ lang('UFLAGMEY_PP_MODE') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_MODE_EXPLAIN') }}</span></dt>
 			<dd><select id="uflagmey_pp_mode" name="uflagmey_pp_mode">
-				<option value="0"{% if UFLAGMEY_PP_MODE == 0 %} selected="selected"{% endif %}>{{ lang('UFLAGMEY_PP_MODE_OFF') }}</option>
-				<option value="1"{% if UFLAGMEY_PP_MODE == 1 %} selected="selected"{% endif %}>{{ lang('UFLAGMEY_PP_MODE_DRYRUN') }}</option>
-				<option value="2"{% if UFLAGMEY_PP_MODE == 2 %} selected="selected"{% endif %}>{{ lang('UFLAGMEY_PP_MODE_ACTIVE') }}</option>
+				<option value="0"{% if UFLAGMEY_PP_MODE == 0 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_MODE_OFF') }}</option>
+				<option value="1"{% if UFLAGMEY_PP_MODE == 1 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_MODE_DRYRUN') }}</option>
+				<option value="2"{% if UFLAGMEY_PP_MODE == 2 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_MODE_ACTIVE') }}</option>
 			</select></dd>
 		</dl>
 		<dl>
-			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br /><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}</span></dt>
-			<dd><input type="number" id="uflagmey_pp_days" name="uflagmey_pp_days" value="{{ UFLAGMEY_PP_DAYS }}" min="1" max="{{ UFLAGMEY_PP_DAYS_MAX }}" /> {{ lang('DAYS') }}</dd>
+			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}</span></dt>
+			<dd><input type="number" id="uflagmey_pp_days" name="uflagmey_pp_days" value="{{ UFLAGMEY_PP_DAYS }}" min="1" max="{{ UFLAGMEY_PP_DAYS_MAX }}"> {{ lang('DAYS') }}</dd>
 		</dl>
 		<dl>
-			<dt><label for="uflagmey_pp_keep_first">{{ lang('UFLAGMEY_PP_KEEP_FIRST') ~ lang('COLON') }}</label><br /><span>{{ lang('UFLAGMEY_PP_KEEP_FIRST_EXPLAIN') }}</span></dt>
-			<dd><label><input type="radio" class="radio" name="uflagmey_pp_keep_first" value="1"{% if S_UFLAGMEY_PP_KEEP_FIRST %} id="uflagmey_pp_keep_first" checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-				<label><input type="radio" class="radio" name="uflagmey_pp_keep_first" value="0"{% if not S_UFLAGMEY_PP_KEEP_FIRST %} id="uflagmey_pp_keep_first" checked="checked"{% endif %} /> {{ lang('NO') }}</label></dd>
+			<dt><label for="uflagmey_pp_keep_first">{{ lang('UFLAGMEY_PP_KEEP_FIRST') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_KEEP_FIRST_EXPLAIN') }}</span></dt>
+			<dd><label><input type="radio" class="radio" name="uflagmey_pp_keep_first" value="1"{% if S_UFLAGMEY_PP_KEEP_FIRST %} id="uflagmey_pp_keep_first" checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="uflagmey_pp_keep_first" value="0"{% if not S_UFLAGMEY_PP_KEEP_FIRST %} id="uflagmey_pp_keep_first" checked{% endif %}> {{ lang('NO') }}</label></dd>
 		</dl>
 		<dl>
-			<dt><label for="uflagmey_pp_skip_sticky">{{ lang('UFLAGMEY_PP_SKIP_STICKY') ~ lang('COLON') }}</label><br /><span>{{ lang('UFLAGMEY_PP_SKIP_STICKY_EXPLAIN') }}</span></dt>
-			<dd><label><input type="radio" class="radio" name="uflagmey_pp_skip_sticky" value="1"{% if S_UFLAGMEY_PP_SKIP_STICKY %} id="uflagmey_pp_skip_sticky" checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-				<label><input type="radio" class="radio" name="uflagmey_pp_skip_sticky" value="0"{% if not S_UFLAGMEY_PP_SKIP_STICKY %} id="uflagmey_pp_skip_sticky" checked="checked"{% endif %} /> {{ lang('NO') }}</label></dd>
+			<dt><label for="uflagmey_pp_skip_sticky">{{ lang('UFLAGMEY_PP_SKIP_STICKY') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_SKIP_STICKY_EXPLAIN') }}</span></dt>
+			<dd><label><input type="radio" class="radio" name="uflagmey_pp_skip_sticky" value="1"{% if S_UFLAGMEY_PP_SKIP_STICKY %} id="uflagmey_pp_skip_sticky" checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="uflagmey_pp_skip_sticky" value="0"{% if not S_UFLAGMEY_PP_SKIP_STICKY %} id="uflagmey_pp_skip_sticky" checked{% endif %}> {{ lang('NO') }}</label></dd>
 		</dl>
 		<dl>
-			<dt><label for="uflagmey_pp_count_sync">{{ lang('UFLAGMEY_PP_COUNT_SYNC') ~ lang('COLON') }}</label><br /><span>{{ lang('UFLAGMEY_PP_COUNT_SYNC_EXPLAIN') }}</span></dt>
-			<dd><label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="1"{% if S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-				<label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="0"{% if not S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked="checked"{% endif %} /> {{ lang('NO') }}</label></dd>
+			<dt><label for="uflagmey_pp_count_sync">{{ lang('UFLAGMEY_PP_COUNT_SYNC') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_COUNT_SYNC_EXPLAIN') }}</span></dt>
+			<dd><label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="1"{% if S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="0"{% if not S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('NO') }}</label></dd>
 		</dl>
