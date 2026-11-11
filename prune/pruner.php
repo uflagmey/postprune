@@ -190,7 +190,8 @@ class pruner
 
 	/**
 	 * Number of marked topics for a forum with scope "marked topics only",
-	 * null for scope "whole forum".
+	 * null for scope "whole forum". Counts all marked topics of the forum,
+	 * not only those with candidates (see query_builder::marked_count_query()).
 	 *
 	 * @param array $forum
 	 * @return int|null

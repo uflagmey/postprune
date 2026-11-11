@@ -338,4 +338,20 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([], fixtures::$delete_calls);
 		$this->assertSame([], $this->logs);
 	}
+
+	public function test_topic_count_is_all_marked_topics_not_only_those_with_candidates()
+	{
+		// topic 10: two old replies; topic 13: marked, only young posts (no candidate)
+		$this->seed_scoped([], [10]);
+		fixtures::topic($this->db, 1, 13, [130 => 5, 131 => 2], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		$this->pruner(2)->run(fixtures::NOW, 100);
+		$this->assertSame([101, 102], fixtures::$delete_calls[0][1]);
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 2, 2]]], $this->logs, '2 posts in 2 marked topics');
+
+		$this->logs = [];
+		$this->db->sql_query('UPDATE phpbb_forums SET uflagmey_pp_mode = 1 WHERE forum_id = 1');
+		$this->db->sql_query('UPDATE phpbb_topics SET uflagmey_pp_marked = 1 WHERE topic_id = 12');
+		$this->pruner(2)->run(fixtures::NOW, 100);
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 2, 3]]], $this->logs, 'dry run: 2 posts (topic 12) in 3 marked topics');
+	}
 }

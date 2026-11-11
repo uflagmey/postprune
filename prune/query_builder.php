@@ -181,6 +181,9 @@ class query_builder
 
 	/**
 	 * Number of marked topics of a forum (logs for scope "marked topics only").
+	 * Fixed rule: the topic count in the DRYRUN/PRUNED_TOPIC(S) log entries is
+	 * the number of MARKED topics in the forum, whether or not each of them has
+	 * old posts right now (shadow topics are not counted).
 	 *
 	 * @param array $forum
 	 * @return array
