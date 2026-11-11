@@ -1,0 +1,8 @@
+services:
+    uflagmey.postprune.listener:
+        class: uflagmey\postprune\event\listener
+        arguments:
+            - '@language'
+            - '@request'
+        tags:
+            - { name: event.listener }
