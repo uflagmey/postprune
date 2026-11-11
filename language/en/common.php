@@ -49,4 +49,13 @@ $lang = array_merge($lang, [
 		2 => '%d topics are marked in this forum. The marks only take effect with the scope “Marked topics only”.',
 	],
 	'UFLAGMEY_PP_ERR_SCOPE'			=> 'Post pruning: invalid scope.',
+	'UFLAGMEY_PP_QM_MARK'				=> 'Prune automatically: switch on',
+	'UFLAGMEY_PP_QM_UNMARK'				=> 'Prune automatically: switch off',
+	'UFLAGMEY_PP_QM_MARK_CONFIRM'		=> 'Do you want to mark the topic “%s” for automatic pruning? Its old posts will then be deleted permanently once the forum uses the scope “Marked topics only” and post pruning is active.',
+	'UFLAGMEY_PP_QM_UNMARK_CONFIRM'		=> 'Do you want to remove the automatic pruning mark from the topic “%s”?',
+	'UFLAGMEY_PP_QM_MARKED'				=> 'The topic is now marked for automatic pruning.',
+	'UFLAGMEY_PP_QM_UNMARKED'			=> 'The automatic pruning mark has been removed.',
+	'UFLAGMEY_PP_QM_ALREADY_MARKED'		=> 'The topic is already marked for automatic pruning.',
+	'UFLAGMEY_PP_QM_NOT_MARKED'			=> 'The topic is not marked for automatic pruning.',
+	'UFLAGMEY_PP_QM_NOT_POSSIBLE'		=> 'This topic cannot be marked for automatic pruning.',
 ]);

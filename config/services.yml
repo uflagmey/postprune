@@ -12,6 +12,23 @@ services:
         tags:
             - { name: event.listener }
 
+    uflagmey.postprune.topic_listener:
+        class: uflagmey\postprune\event\topic_listener
+        arguments:
+            - '@auth'
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@user'
+            - '%tables.topics%'
+            - '%tables.forums%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
+
     uflagmey.postprune.query_builder:
         class: uflagmey\postprune\prune\query_builder
         arguments:

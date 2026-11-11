@@ -49,4 +49,13 @@ $lang = array_merge($lang, [
 		2 => 'In diesem Forum sind %d Themen markiert. Die Markierungen wirken erst, wenn der Geltungsbereich „Nur markierte Themen“ eingestellt ist.',
 	],
 	'UFLAGMEY_PP_ERR_SCOPE'			=> 'Beitrags-Pruning: Ungültiger Geltungsbereich.',
+	'UFLAGMEY_PP_QM_MARK'				=> 'Automatisch kürzen: einschalten',
+	'UFLAGMEY_PP_QM_UNMARK'				=> 'Automatisch kürzen: ausschalten',
+	'UFLAGMEY_PP_QM_MARK_CONFIRM'		=> 'Willst du das Thema „%s“ zum automatischen Kürzen markieren? Alte Beiträge darin werden dann endgültig gelöscht, sobald im Forum der Geltungsbereich „Nur markierte Themen“ eingestellt und das Beitrags-Pruning aktiv ist.',
+	'UFLAGMEY_PP_QM_UNMARK_CONFIRM'		=> 'Willst du beim Thema „%s“ die Markierung zum automatischen Kürzen entfernen?',
+	'UFLAGMEY_PP_QM_MARKED'				=> 'Das Thema ist jetzt zum automatischen Kürzen markiert.',
+	'UFLAGMEY_PP_QM_UNMARKED'			=> 'Die Markierung zum automatischen Kürzen wurde entfernt.',
+	'UFLAGMEY_PP_QM_ALREADY_MARKED'		=> 'Das Thema ist bereits zum automatischen Kürzen markiert.',
+	'UFLAGMEY_PP_QM_NOT_MARKED'			=> 'Das Thema ist nicht zum automatischen Kürzen markiert.',
+	'UFLAGMEY_PP_QM_NOT_POSSIBLE'		=> 'Dieses Thema kann nicht zum automatischen Kürzen markiert werden.',
 ]);
