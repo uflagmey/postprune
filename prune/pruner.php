@@ -65,7 +65,7 @@ class pruner
 	 */
 	public function get_forums()
 	{
-		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query());
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query(schema::topic_scope($this->config)));
 		$result = $this->db->sql_query($sql);
 		$forums = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
@@ -79,6 +79,9 @@ class pruner
 	 * when no backlog is left, so a backlog that is worked off over several
 	 * page requests produces exactly one dry-run log entry per cycle. That
 	 * entry is written even with 0 candidates, as proof that the cron ran.
+	 * Forums with scope "marked topics only" name the number of marked topics
+	 * in their log entries; without any marked topic they get one entry per
+	 * cycle saying so (dry run and active).
 	 *
 	 * @param int	$now
 	 * @param int	$batch	Maximum number of posts to delete in this run
@@ -88,13 +91,20 @@ class pruner
 	{
 		$remaining = max(1, (int) $batch);
 		$backlog = false;
-		$pruned = $dryrun = [];
+		$pruned = $dryrun = $no_topics = [];
 		$forums = $this->get_forums();
 
 		foreach ($forums as $forum)
 		{
 			if ((int) $forum['uflagmey_pp_mode'] !== query_builder::MODE_ACTIVE)
 			{
+				continue;
+			}
+
+			$topics = $this->marked_topics($forum);
+			if ($topics === 0)
+			{
+				$no_topics[] = $forum;
 				continue;
 			}
 
@@ -121,16 +131,36 @@ class pruner
 
 			if ($deleted)
 			{
-				$this->add_log('LOG_UFLAGMEY_PP_PRUNED', $forum['forum_name'], $deleted);
+				if ($topics === null)
+				{
+					$this->add_log('LOG_UFLAGMEY_PP_PRUNED', [$forum['forum_name'], $deleted]);
+				}
+				else
+				{
+					$this->add_log($topics === 1 ? 'LOG_UFLAGMEY_PP_PRUNED_TOPIC' : 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', [$forum['forum_name'], $deleted, $topics]);
+				}
 			}
 		}
 
 		if (!$backlog)
 		{
+			foreach ($no_topics as $forum)
+			{
+				$this->add_log('LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS', [$forum['forum_name']]);
+			}
+
 			foreach ($forums as $forum)
 			{
 				if ((int) $forum['uflagmey_pp_mode'] !== query_builder::MODE_DRYRUN)
 				{
+					continue;
+				}
+
+				$topics = $this->marked_topics($forum);
+				if ($topics === 0)
+				{
+					$dryrun[(int) $forum['forum_id']] = 0;
+					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', [$forum['forum_name']]);
 					continue;
 				}
 
@@ -140,7 +170,14 @@ class pruner
 				$this->db->sql_freeresult($result);
 
 				$dryrun[(int) $forum['forum_id']] = $num;
-				$this->add_log('LOG_UFLAGMEY_PP_DRYRUN', $forum['forum_name'], $num);
+				if ($topics === null)
+				{
+					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN', [$forum['forum_name'], $num]);
+				}
+				else
+				{
+					$this->add_log($topics === 1 ? 'LOG_UFLAGMEY_PP_DRYRUN_TOPIC' : 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', [$forum['forum_name'], $num, $topics]);
+				}
 			}
 		}
 
@@ -149,6 +186,28 @@ class pruner
 			'pruned'	=> $pruned,
 			'dryrun'	=> $dryrun,
 		];
+	}
+
+	/**
+	 * Number of marked topics for a forum with scope "marked topics only",
+	 * null for scope "whole forum".
+	 *
+	 * @param array $forum
+	 * @return int|null
+	 */
+	protected function marked_topics(array $forum)
+	{
+		if ($this->query_builder->scope($forum) !== query_builder::SCOPE_MARKED)
+		{
+			return null;
+		}
+
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->marked_count_query($forum));
+		$result = $this->db->sql_query($sql);
+		$num = (int) $this->db->sql_fetchfield('num_topics');
+		$this->db->sql_freeresult($result);
+
+		return $num;
 	}
 
 	/**
@@ -187,15 +246,17 @@ class pruner
 	}
 
 	/**
+	 * Log data: forum name first, then the post count (phpBB picks the plural
+	 * form by the first integer), then the number of marked topics if any.
+	 *
 	 * @param string	$operation
-	 * @param string	$forum_name
-	 * @param int		$num
+	 * @param array		$data
 	 */
-	protected function add_log($operation, $forum_name, $num)
+	protected function add_log($operation, array $data)
 	{
 		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
 		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
 
-		$this->log->add('admin', $user_id, $ip, $operation, false, [$forum_name, (int) $num]);
+		$this->log->add('admin', $user_id, $ip, $operation, false, $data);
 	}
 }

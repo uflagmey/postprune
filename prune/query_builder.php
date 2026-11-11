@@ -59,12 +59,15 @@ class query_builder
 	 * Forums with post pruning switched on. Only real post forums: categories
 	 * and links are ignored even if a mode is stored for them.
 	 *
+	 * @param bool $topic_scope	Schema has the scope column (schema::topic_scope()); without it,
+	 *							rows carry no scope and everything behaves like scope 0 (beta2)
 	 * @return array
 	 */
-	public function forums_query()
+	public function forums_query($topic_scope = false)
 	{
 		return [
-			'SELECT'	=> 'f.forum_id, f.forum_name, f.uflagmey_pp_mode, f.uflagmey_pp_days, f.uflagmey_pp_keep_first, f.uflagmey_pp_skip_sticky, f.uflagmey_pp_count_sync',
+			'SELECT'	=> 'f.forum_id, f.forum_name, f.uflagmey_pp_mode, f.uflagmey_pp_days, f.uflagmey_pp_keep_first, f.uflagmey_pp_skip_sticky, f.uflagmey_pp_count_sync'
+				. ($topic_scope ? ', f.uflagmey_pp_scope' : ''),
 			'FROM'		=> [$this->forums_table => 'f'],
 			'WHERE'		=> 'f.uflagmey_pp_mode > ' . self::MODE_OFF . '
 				AND f.forum_type = ' . (int) $this->forum_post,
@@ -137,6 +140,63 @@ class query_builder
 	}
 
 	/**
+	 * Scope of a forum row: SCOPE_MARKED only if the row carries the scope
+	 * column (see forums_query()), otherwise SCOPE_FORUM as in beta2.
+	 *
+	 * @param array $forum
+	 * @return int
+	 */
+	public function scope(array $forum)
+	{
+		return (isset($forum['uflagmey_pp_scope']) && (int) $forum['uflagmey_pp_scope'] === self::SCOPE_MARKED) ? self::SCOPE_MARKED : self::SCOPE_FORUM;
+	}
+
+	/**
+	 * THE topic-level rule "is topic t subject to post pruning in this forum".
+	 * Used by the cron candidates, the dry-run count and the topic notice.
+	 * Scope "marked topics only": only marked topics, stickies/announcements
+	 * included (the mark beats skip_sticky). Scope "whole forum": every topic,
+	 * minus stickies/announcements if skip_sticky.
+	 *
+	 * @param array $forum	Row from forums_query()
+	 * @return string		SQL condition on the topics table alias t
+	 */
+	public function topic_where(array $forum)
+	{
+		$where = 't.forum_id = ' . (int) $forum['forum_id'];
+
+		if ($this->scope($forum) === self::SCOPE_MARKED)
+		{
+			$where .= '
+			AND t.uflagmey_pp_marked = 1';
+		}
+		else if (!empty($forum['uflagmey_pp_skip_sticky']))
+		{
+			$where .= '
+			AND t.topic_type = ' . $this->post_normal;
+		}
+
+		return $where;
+	}
+
+	/**
+	 * Number of marked topics of a forum (logs for scope "marked topics only").
+	 *
+	 * @param array $forum
+	 * @return array
+	 */
+	public function marked_count_query(array $forum)
+	{
+		return [
+			'SELECT'	=> 'COUNT(t.topic_id) AS num_topics',
+			'FROM'		=> [$this->topics_table => 't'],
+			'WHERE'		=> 't.forum_id = ' . (int) $forum['forum_id'] . '
+				AND t.uflagmey_pp_marked = 1
+				AND t.topic_moved_id = 0',
+		];
+	}
+
+	/**
 	 * @param array	$forum
 	 * @param int	$now
 	 * @return string
@@ -145,18 +205,13 @@ class query_builder
 	{
 		$where = 'p.topic_id = t.topic_id
 			AND p.forum_id = ' . (int) $forum['forum_id'] . '
+			AND ' . $this->topic_where($forum) . '
 			AND p.post_time < ' . $this->cutoff($forum['uflagmey_pp_days'], $now);
 
 		if (!empty($forum['uflagmey_pp_keep_first']))
 		{
 			$where .= '
 			AND p.post_id <> t.topic_first_post_id';
-		}
-
-		if (!empty($forum['uflagmey_pp_skip_sticky']))
-		{
-			$where .= '
-			AND t.topic_type = ' . $this->post_normal;
 		}
 
 		return $where;

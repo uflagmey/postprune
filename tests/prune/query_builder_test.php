@@ -103,7 +103,7 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 	/**
 	 * @return array [ids from candidates_query, count from count_query]
 	 */
-	protected function select(array $settings)
+	protected function select(array $settings, array $marked = [])
 	{
 		$db = fixtures::db();
 		fixtures::forum($db, 1, 'A', FORUM_POST, $settings);
@@ -119,6 +119,10 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		fixtures::topic($db, 1, 15, [150 => 70, 151 => 80]);
 		// another forum, old
 		fixtures::topic($db, 2, 20, [200 => 90, 201 => 80]);
+		if ($marked)
+		{
+			$db->sql_query('UPDATE phpbb_topics SET uflagmey_pp_marked = 1 WHERE ' . $db->sql_in_set('topic_id', $marked));
+		}
 
 		$forum = array_merge(['forum_id' => 1, 'uflagmey_pp_days' => 30, 'uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], $settings);
 		$qb = fixtures::query_builder();
@@ -180,5 +184,64 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([[11, 'Alpha'], [10, 'Zeta']], array_map(function ($r) {
 			return [(int) $r['topic_id'], $r['topic_title']];
 		}, $rows));
+	}
+
+	public function test_scope_marked_only_marked_topics_sticky_included_keep_first_kept()
+	{
+		// topic 12 is a sticky: skip_sticky=1 does not apply to marked topics; topic 20 (other forum) is marked too
+		list($ids, $count) = $this->select(['uflagmey_pp_scope' => 1, 'uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], [10, 12, 20]);
+		$this->assertSame([101, 121, 102], $ids);
+		$this->assertSame(3, $count);
+	}
+
+	public function test_scope_marked_without_keep_first_takes_start_posts()
+	{
+		list($ids) = $this->select(['uflagmey_pp_scope' => 1, 'uflagmey_pp_keep_first' => 0, 'uflagmey_pp_skip_sticky' => 1], [10, 12]);
+		$this->assertSame([100, 120, 101, 121, 102], $ids);
+	}
+
+	public function test_scope_marked_without_marks_selects_nothing()
+	{
+		list($ids, $count) = $this->select(['uflagmey_pp_scope' => 1], [20]);
+		$this->assertSame([], $ids);
+		$this->assertSame(0, $count);
+	}
+
+	public function test_scope_forum_ignores_marks_exactly_like_beta2()
+	{
+		$beta2 = [101, 151, 111, 112, 113, 102];
+		list($ids) = $this->select(['uflagmey_pp_scope' => 0, 'uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], [10, 12]);
+		$this->assertSame($beta2, $ids, 'scope 0');
+		list($ids) = $this->select(['uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], [10, 12]);
+		$this->assertSame($beta2, $ids, 'no scope column (update not complete) = beta2, even with scope-1 marks present');
+	}
+
+	public function test_topic_where_is_the_single_topic_rule()
+	{
+		$qb = fixtures::query_builder();
+		$this->assertSame('t.forum_id = 4', preg_replace('/\s+/', ' ', $qb->topic_where(['forum_id' => 4, 'uflagmey_pp_skip_sticky' => 0])));
+		$this->assertSame('t.forum_id = 4 AND t.topic_type = ' . POST_NORMAL, preg_replace('/\s+/', ' ', $qb->topic_where(['forum_id' => 4, 'uflagmey_pp_skip_sticky' => 1])));
+		$this->assertSame('t.forum_id = 4 AND t.uflagmey_pp_marked = 1', preg_replace('/\s+/', ' ', $qb->topic_where(['forum_id' => 4, 'uflagmey_pp_skip_sticky' => 1, 'uflagmey_pp_scope' => 1])));
+		$this->assertStringContainsString($qb->topic_where(['forum_id' => 4, 'uflagmey_pp_scope' => 1]), $qb->candidates_query(['forum_id' => 4, 'uflagmey_pp_days' => 30, 'uflagmey_pp_scope' => 1], fixtures::NOW)['WHERE']);
+	}
+
+	public function test_forums_query_selects_scope_only_with_topic_scope()
+	{
+		$qb = fixtures::query_builder();
+		$this->assertStringNotContainsString('uflagmey_pp_scope', $qb->forums_query()['SELECT']);
+		$this->assertStringContainsString('f.uflagmey_pp_scope', $qb->forums_query(true)['SELECT']);
+	}
+
+	public function test_marked_count_query_ignores_shadow_topics_and_other_forums()
+	{
+		$db = fixtures::db();
+		fixtures::topic($db, 1, 10, [100 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 11, [110 => 1], POST_STICKY, ['uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 12, [120 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1, 'topic_moved_id' => 99]);
+		fixtures::topic($db, 1, 13, [130 => 1]);
+		fixtures::topic($db, 2, 20, [200 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		$result = $db->sql_query($db->sql_build_query('SELECT', fixtures::query_builder()->marked_count_query(['forum_id' => 1])));
+		$this->assertSame(2, (int) $db->sql_fetchfield('num_topics'));
+		$db->sql_freeresult($result);
 	}
 }

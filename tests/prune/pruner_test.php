@@ -35,8 +35,13 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->logs = [];
 	}
 
-	protected function pruner()
+	protected function pruner($schema = 0)
 	{
+		if ($schema)
+		{
+			$this->config['uflagmey_pp_schema'] = $schema;
+		}
+
 		$log = $this->createMock(\phpbb\log\log_interface::class);
 		$log->method('add')->willReturnCallback(function ($mode, $user_id, $ip, $operation, $time, $data) {
 			$this->logs[] = [$mode, $user_id, $operation, $data];
@@ -232,6 +237,103 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		fixtures::topic($this->db, 1, 10, [100 => 90, 101 => 5]);
 		$result = $this->pruner()->run(fixtures::NOW, 6);
 
+		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
+		$this->assertSame([], fixtures::$delete_calls);
+		$this->assertSame([], $this->logs);
+	}
+
+	/**
+	 * Forum 1 scope "marked topics only": 10 marked normal, 11 marked sticky (skip_sticky=1), 12 unmarked.
+	 */
+	protected function seed_scoped(array $forum = [], array $marked = [10, 11])
+	{
+		fixtures::forum($this->db, 1, 'S', FORUM_POST, array_merge(['uflagmey_pp_mode' => 2, 'uflagmey_pp_scope' => 1], $forum));
+		fixtures::topic($this->db, 1, 10, [100 => 90, 101 => 80, 102 => 70]);
+		fixtures::topic($this->db, 1, 11, [110 => 90, 111 => 80], POST_STICKY);
+		fixtures::topic($this->db, 1, 12, [120 => 90, 121 => 80, 122 => 70]);
+		if ($marked)
+		{
+			$this->db->sql_query('UPDATE phpbb_topics SET uflagmey_pp_marked = 1 WHERE ' . $this->db->sql_in_set('topic_id', $marked));
+		}
+	}
+
+	public function test_scope_marked_deletes_only_marked_topics_and_names_them()
+	{
+		$this->seed_scoped();
+		$result = $this->pruner(2)->run(fixtures::NOW, 100);
+
+		$this->assertSame([101, 111, 102], fixtures::$delete_calls[0][1], 'marked sticky included, start posts kept, unmarked 12 untouched');
+		$this->assertSame([1 => 3], $result['pruned']);
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 3, 2]]], $this->logs);
+	}
+
+	public function test_scope_marked_single_topic_log_key()
+	{
+		$this->seed_scoped([], [10]);
+		$this->pruner(2)->run(fixtures::NOW, 100);
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPIC', ['S', 2, 1]]], $this->logs);
+	}
+
+	public function test_scope_marked_without_schema_marker_behaves_like_beta2()
+	{
+		$this->seed_scoped();
+		$this->pruner()->run(fixtures::NOW, 100);
+
+		$this->assertSame([101, 121, 102, 122], fixtures::$delete_calls[0][1], 'whole forum minus sticky, marks ignored');
+		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED', ['S', 4]]], $this->logs);
+	}
+
+	public function test_active_without_marked_topics_logs_once_per_cycle()
+	{
+		// forum 5 (whole forum, 10 candidates) keeps a backlog over two runs with batch 6
+		$this->seed_scoped([], []);
+		fixtures::forum($this->db, 5, 'W', FORUM_POST, ['uflagmey_pp_mode' => 2]);
+		$posts = [500 => 1];
+		for ($i = 1; $i <= 10; $i++)
+		{
+			$posts[500 + $i] = 90 - $i;
+		}
+		fixtures::topic($this->db, 5, 50, $posts);
+		$pruner = $this->pruner(2);
+		$no_topics = [];
+		do
+		{
+			$before = count($this->logs);
+			$result = $pruner->run(fixtures::NOW, 6);
+			$no_topics[] = count(array_filter(array_slice($this->logs, $before), function ($l) {
+				return $l[2] === 'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS';
+			}));
+		}
+		while ($result['backlog'] && count($no_topics) < 10);
+
+		$this->assertSame([0, 1], $no_topics, 'only in the cycle-closing run');
+		$this->assertNotContains(120, array_merge(...array_column(fixtures::$delete_calls, 1)), 'unmarked topic untouched');
+		$this->assertContains(['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS', ['S']], $this->logs);
+	}
+
+	public function test_dry_run_scope_marked_texts()
+	{
+		$this->seed_scoped(['uflagmey_pp_mode' => 1]);
+		fixtures::forum($this->db, 2, 'N', FORUM_POST, ['uflagmey_pp_mode' => 1, 'uflagmey_pp_scope' => 1]);
+		fixtures::topic($this->db, 2, 20, [200 => 90, 201 => 80]);
+		fixtures::forum($this->db, 3, 'Z', FORUM_POST, ['uflagmey_pp_mode' => 1, 'uflagmey_pp_scope' => 1]);
+		fixtures::topic($this->db, 3, 30, [300 => 90, 301 => 5], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		fixtures::topic($this->db, 3, 31, [310 => 90], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		$result = $this->pruner(2)->run(fixtures::NOW, 100);
+
+		$this->assertSame([], fixtures::$delete_calls);
+		$this->assertSame([1 => 3, 2 => 0, 3 => 0], $result['dryrun']);
+		$this->assertSame([
+			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 3, 2]],
+			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', ['N']],
+			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['Z', 0, 2]],
+		], $this->logs);
+	}
+
+	public function test_marked_topic_in_forum_with_mode_off_untouched()
+	{
+		$this->seed_scoped(['uflagmey_pp_mode' => 0]);
+		$result = $this->pruner(2)->run(fixtures::NOW, 100);
 		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
 		$this->assertSame([], fixtures::$delete_calls);
 		$this->assertSame([], $this->logs);
