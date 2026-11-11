@@ -33,8 +33,9 @@ namespace uflagmey\postprune\tests\prune
 			$db->sql_connect(':memory:', '', '', '');
 			$db->sql_query('CREATE TABLE phpbb_forums (forum_id INTEGER PRIMARY KEY, forum_name TEXT, forum_type INTEGER,
 				uflagmey_pp_mode INTEGER DEFAULT 0, uflagmey_pp_days INTEGER DEFAULT 30, uflagmey_pp_keep_first INTEGER DEFAULT 1,
-				uflagmey_pp_skip_sticky INTEGER DEFAULT 1, uflagmey_pp_count_sync INTEGER DEFAULT 0)');
-			$db->sql_query('CREATE TABLE phpbb_topics (topic_id INTEGER PRIMARY KEY, forum_id INTEGER, topic_type INTEGER, topic_first_post_id INTEGER)');
+				uflagmey_pp_skip_sticky INTEGER DEFAULT 1, uflagmey_pp_count_sync INTEGER DEFAULT 0, uflagmey_pp_scope INTEGER DEFAULT 0)');
+			$db->sql_query('CREATE TABLE phpbb_topics (topic_id INTEGER PRIMARY KEY, forum_id INTEGER, topic_type INTEGER, topic_first_post_id INTEGER,
+				topic_title TEXT DEFAULT \'\', topic_moved_id INTEGER DEFAULT 0, uflagmey_pp_marked INTEGER DEFAULT 0)');
 			$db->sql_query('CREATE TABLE phpbb_posts (post_id INTEGER PRIMARY KEY, topic_id INTEGER, forum_id INTEGER, post_time INTEGER, post_visibility INTEGER)');
 
 			self::$db = $db;
@@ -74,14 +75,15 @@ namespace uflagmey\postprune\tests\prune
 		 * @param array	$posts		[post_id => age_days] or [post_id => [age_days, visibility]]
 		 * @param int	$topic_type
 		 */
-		public static function topic($db, $forum_id, $topic_id, array $posts, $topic_type = POST_NORMAL)
+		public static function topic($db, $forum_id, $topic_id, array $posts, $topic_type = POST_NORMAL, array $extra = [])
 		{
-			$db->sql_query('INSERT INTO phpbb_topics ' . $db->sql_build_array('INSERT', [
+			$db->sql_query('INSERT INTO phpbb_topics ' . $db->sql_build_array('INSERT', array_merge([
 				'topic_id'				=> $topic_id,
 				'forum_id'				=> $forum_id,
 				'topic_type'			=> $topic_type,
 				'topic_first_post_id'	=> (int) key($posts),
-			]));
+				'topic_title'			=> 'T' . $topic_id,
+			], $extra)));
 
 			foreach ($posts as $post_id => $spec)
 			{

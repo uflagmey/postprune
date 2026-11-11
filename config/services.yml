@@ -5,6 +5,10 @@ services:
             - '@language'
             - '@request'
             - '@config'
+            - '@dbal.conn'
+            - '@uflagmey.postprune.query_builder'
+            - '%core.root_path%'
+            - '%core.php_ext%'
         tags:
             - { name: event.listener }
 

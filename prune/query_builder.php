@@ -21,6 +21,9 @@ class query_builder
 	const MODE_DRYRUN = 1;
 	const MODE_ACTIVE = 2;
 
+	const SCOPE_FORUM = 0;
+	const SCOPE_MARKED = 1;
+
 	/** @var string */
 	protected $posts_table;
 
@@ -66,6 +69,25 @@ class query_builder
 			'WHERE'		=> 'f.uflagmey_pp_mode > ' . self::MODE_OFF . '
 				AND f.forum_type = ' . (int) $this->forum_post,
 			'ORDER_BY'	=> 'f.forum_id ASC',
+		];
+	}
+
+	/**
+	 * Topics of one forum that are marked for pruning (ACP list). Only valid
+	 * with schema::topic_scope().
+	 *
+	 * @param int	$forum_id
+	 * @return array
+	 */
+	public function marked_topics_query($forum_id)
+	{
+		return [
+			'SELECT'	=> 't.topic_id, t.topic_title',
+			'FROM'		=> [$this->topics_table => 't'],
+			'WHERE'		=> 't.forum_id = ' . (int) $forum_id . '
+				AND t.uflagmey_pp_marked = 1
+				AND t.topic_moved_id = 0',
+			'ORDER_BY'	=> 't.topic_title ASC, t.topic_id ASC',
 		];
 	}
 

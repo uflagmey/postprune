@@ -37,4 +37,16 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_ERR_MODE'				=> 'Beitrags-Pruning: Ungültiger Modus.',
 	'UFLAGMEY_PP_ERR_DAYS'				=> 'Beitrags-Pruning: Das Alter der Beiträge muss zwischen 1 und %d Tagen liegen.',
 	'UFLAGMEY_PP_UPDATE_PENDING'		=> 'Das Update von Post Prune ist noch nicht abgeschlossen. Bitte die Erweiterung einmal deaktivieren und wieder aktivieren (ACP » Anpassen » Erweiterungen verwalten), um das Update abzuschließen. Die Einstellungen bleiben dabei erhalten. Bis dahin arbeitet die Erweiterung wie in der Vorversion.',
+	'UFLAGMEY_PP_SCOPE'				=> 'Geltungsbereich',
+	'UFLAGMEY_PP_SCOPE_EXPLAIN'		=> 'Ganzes Forum: Alle Themen dieses Forums werden gekürzt. Nur markierte Themen: Nur Themen, die ein Administrator in der Themenansicht über die Moderations-Werkzeuge markiert hat, z. B. ein Sammelthema. Markierte Themen werden dabei auch dann gekürzt, wenn sie wichtig oder Bekanntmachungen sind. „Wichtige Themen und Bekanntmachungen ausnehmen“ gilt nur für „Ganzes Forum“.',
+	'UFLAGMEY_PP_SCOPE_FORUM'			=> 'Ganzes Forum',
+	'UFLAGMEY_PP_SCOPE_MARKED'			=> 'Nur markierte Themen',
+	'UFLAGMEY_PP_MARKED_TOPICS'		=> 'Markierte Themen',
+	'UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN'	=> 'Themen dieses Forums, die zum automatischen Kürzen markiert sind.',
+	'UFLAGMEY_PP_MARKED_NONE'			=> 'Keine Themen markiert. Markieren in der Themenansicht über die Moderations-Werkzeuge.',
+	'UFLAGMEY_PP_MARKED_INACTIVE'		=> [
+		1 => 'In diesem Forum ist %d Thema markiert. Die Markierung wirkt erst, wenn der Geltungsbereich „Nur markierte Themen“ eingestellt ist.',
+		2 => 'In diesem Forum sind %d Themen markiert. Die Markierungen wirken erst, wenn der Geltungsbereich „Nur markierte Themen“ eingestellt ist.',
+	],
+	'UFLAGMEY_PP_ERR_SCOPE'			=> 'Beitrags-Pruning: Ungültiger Geltungsbereich.',
 ]);

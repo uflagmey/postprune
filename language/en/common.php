@@ -37,4 +37,16 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_ERR_MODE'				=> 'Post pruning: invalid mode.',
 	'UFLAGMEY_PP_ERR_DAYS'				=> 'Post pruning: the post age must be between 1 and %d days.',
 	'UFLAGMEY_PP_UPDATE_PENDING'		=> 'The Post Prune update is not complete yet. Please disable the extension once and enable it again (ACP » Customise » Manage extensions) to complete the update. Your settings are kept. Until then the extension works as in the previous version.',
+	'UFLAGMEY_PP_SCOPE'				=> 'Scope',
+	'UFLAGMEY_PP_SCOPE_EXPLAIN'		=> 'Whole forum: all topics of this forum are pruned. Marked topics only: only topics an administrator has marked in the topic view via the moderator tools, e.g. a collection topic. Marked topics are pruned even if they are stickies or announcements. “Skip stickies and announcements” only applies to “Whole forum”.',
+	'UFLAGMEY_PP_SCOPE_FORUM'			=> 'Whole forum',
+	'UFLAGMEY_PP_SCOPE_MARKED'			=> 'Marked topics only',
+	'UFLAGMEY_PP_MARKED_TOPICS'		=> 'Marked topics',
+	'UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN'	=> 'Topics of this forum that are marked for automatic pruning.',
+	'UFLAGMEY_PP_MARKED_NONE'			=> 'No topics marked. Mark them in the topic view via the moderator tools.',
+	'UFLAGMEY_PP_MARKED_INACTIVE'		=> [
+		1 => '%d topic is marked in this forum. The mark only takes effect with the scope “Marked topics only”.',
+		2 => '%d topics are marked in this forum. The marks only take effect with the scope “Marked topics only”.',
+	],
+	'UFLAGMEY_PP_ERR_SCOPE'			=> 'Post pruning: invalid scope.',
 ]);

@@ -11,6 +11,29 @@
 				<option value="2"{% if UFLAGMEY_PP_MODE == 2 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_MODE_ACTIVE') }}</option>
 			</select></dd>
 		</dl>
+		{% if S_UFLAGMEY_PP_TOPIC_SCOPE %}
+		<dl>
+			<dt><label for="uflagmey_pp_scope">{{ lang('UFLAGMEY_PP_SCOPE') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_SCOPE_EXPLAIN') }}</span></dt>
+			<dd><select id="uflagmey_pp_scope" name="uflagmey_pp_scope">
+				<option value="0"{% if UFLAGMEY_PP_SCOPE == 0 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_SCOPE_FORUM') }}</option>
+				<option value="1"{% if UFLAGMEY_PP_SCOPE == 1 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_SCOPE_MARKED') }}</option>
+			</select></dd>
+		</dl>
+		<dl id="uflagmey_pp_marked">
+			<dt><label>{{ lang('UFLAGMEY_PP_MARKED_TOPICS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN') }}</span></dt>
+			<dd>
+				{% if UFLAGMEY_PP_MARKED_INACTIVE %}<p class="uflagmey-pp-marked-inactive"><strong>{{ UFLAGMEY_PP_MARKED_INACTIVE }}</strong></p>{% endif %}
+				{% if UFLAGMEY_PP_MARKED|length %}
+				<ul class="uflagmey-pp-marked-list">
+					{% for topic in UFLAGMEY_PP_MARKED %}<li><a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }})</li>
+					{% endfor %}
+				</ul>
+				{% else %}
+				<span class="uflagmey-pp-marked-none">{{ lang('UFLAGMEY_PP_MARKED_NONE') }}</span>
+				{% endif %}
+			</dd>
+		</dl>
+		{% endif %}
 		<dl>
 			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}</span></dt>
 			<dd><input type="number" id="uflagmey_pp_days" name="uflagmey_pp_days" value="{{ UFLAGMEY_PP_DAYS }}" min="1" max="{{ UFLAGMEY_PP_DAYS_MAX }}"> {{ lang('DAYS') }}</dd>

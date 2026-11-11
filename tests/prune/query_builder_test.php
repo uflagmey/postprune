@@ -161,4 +161,24 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		$this->assertNotContains(103, $ids, 'exactly N days old is not older than N days');
 		$this->assertNotContains(104, $ids);
 	}
+
+	public function test_marked_topics_query_lists_only_marked_topics_of_the_forum_by_title()
+	{
+		$db = fixtures::db();
+		fixtures::forum($db, 1, 'A', FORUM_POST);
+		fixtures::forum($db, 2, 'B', FORUM_POST);
+		fixtures::topic($db, 1, 10, [100 => 1], POST_NORMAL, ['topic_title' => 'Zeta', 'uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 11, [110 => 1], POST_STICKY, ['topic_title' => 'Alpha', 'uflagmey_pp_marked' => 1]);
+		fixtures::topic($db, 1, 12, [120 => 1], POST_NORMAL, ['topic_title' => 'Beta']);
+		fixtures::topic($db, 1, 13, [130 => 1], POST_NORMAL, ['topic_title' => 'Shadow', 'uflagmey_pp_marked' => 1, 'topic_moved_id' => 99]);
+		fixtures::topic($db, 2, 20, [200 => 1], POST_NORMAL, ['topic_title' => 'Other forum', 'uflagmey_pp_marked' => 1]);
+
+		$result = $db->sql_query($db->sql_build_query('SELECT', fixtures::query_builder()->marked_topics_query(1)));
+		$rows = $db->sql_fetchrowset($result);
+		$db->sql_freeresult($result);
+
+		$this->assertSame([[11, 'Alpha'], [10, 'Zeta']], array_map(function ($r) {
+			return [(int) $r['topic_id'], $r['topic_title']];
+		}, $rows));
+	}
 }
