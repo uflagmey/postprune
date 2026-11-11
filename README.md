@@ -39,7 +39,7 @@ Deinstallation: Erweiterung deaktivieren und anschließend **Arbeitsdaten lösch
 
 Die Einstellungen der Foren bleiben dabei erhalten. Der neue Geltungsbereich steht für alle Foren auf „Ganzes Forum“, das Verhalten ist also zunächst genau wie vorher.
 
-Wird Schritt 3 ausgelassen (oder nur der Cache geleert), geht nichts kaputt: Die Extension arbeitet weiter wie die Vorversion, nur die neuen Funktionen erscheinen nicht. Im Forum-Formular im ACP steht dann ein Hinweis, dass die Erweiterung einmal deaktiviert und wieder aktiviert werden muss.
+Wird Schritt 3 ausgelassen (oder nur der Cache geleert), geht nichts kaputt: Die Extension arbeitet weiter wie die Vorversion, nur die neuen Funktionen erscheinen nicht. Sobald der Cache geleert wurde, steht im Forum-Formular im ACP ein Hinweis, dass die Erweiterung einmal deaktiviert und wieder aktiviert werden muss.
 
 ### Erste Schritte / Häufige Stolpersteine
 
@@ -66,7 +66,7 @@ ACP → **Foren → Forum bearbeiten**, Block **„Beitrags-Pruning (einzelne Be
 | Geltungsbereich | Ganzes Forum | **Ganzes Forum**: alle Themen des Forums. **Nur markierte Themen**: nur Themen, die in der Themenansicht markiert wurden (siehe „Nur bestimmte Themen kürzen“). Darunter listet das ACP die markierten Themen des Forums. |
 | Alter der Beiträge | 30 Tage | Beiträge, die älter als so viele Tage sind (1–65535). |
 | Ersten Beitrag eines Themas behalten | Ja | Ja: Der Startbeitrag bleibt und damit das Thema. Nein: Ein Thema verschwindet, sobald alle seine Beiträge alt sind. Ist bei „Ja“ auch der Startbeitrag alt, bleibt er stehen, bis ggf. das Themen-Pruning von phpBB greift. |
-| Wichtige Themen und Bekanntmachungen ausnehmen | Ja | Beiträge in wichtigen Themen, Bekanntmachungen und globalen Bekanntmachungen werden nie gelöscht. Gilt nur für „Ganzes Forum“: Ein **markiertes** Thema wird auch dann gekürzt, wenn es angeheftet ist. |
+| Wichtige Themen und Bekanntmachungen ausnehmen | Ja | Beiträge in wichtigen Themen, Bekanntmachungen und globalen Bekanntmachungen werden nie gelöscht. Gilt nur beim Geltungsbereich „Ganzes Forum“, dort auch für markierte Themen (die Markierung wird dort ignoriert). Nur beim Geltungsbereich „Nur markierte Themen“ wird ein markiertes Thema auch dann gekürzt, wenn es wichtig oder eine Bekanntmachung ist. |
 | Beitragszähler der Benutzer reduzieren | Nein | Nein (wie beim Themen-Pruning von phpBB): Der Beitragszähler des Verfassers bleibt. Ja: Er sinkt für jeden gelöschten (freigegebenen) Beitrag. |
 
 Ungeprüfte und soft-gelöschte Beiträge werden ebenfalls nach Alter gelöscht. Die Board-Statistik (Anzahl Beiträge und Themen) wird in beiden Fällen korrigiert.
@@ -144,7 +144,7 @@ Uninstall: disable the extension, then **Delete data**. This removes the extensi
 
 Your forum settings are kept. The new scope is set to “Whole forum” for every forum, so the behaviour is exactly as before at first.
 
-If step 3 is skipped (or only the cache is purged), nothing breaks: the extension keeps working like the previous version, only the new features do not appear. The forum form in the ACP then shows a notice that the extension has to be disabled and enabled once.
+If step 3 is skipped (or only the cache is purged), nothing breaks: the extension keeps working like the previous version, only the new features do not appear. Once the cache has been purged, the forum form in the ACP shows a notice that the extension has to be disabled and enabled once.
 
 ### Getting started / common pitfalls
 
@@ -171,7 +171,7 @@ ACP → **Forums → Edit forum**, block **“Post pruning (individual posts)”
 | Scope | Whole forum | **Whole forum**: all topics of the forum. **Marked topics only**: only topics marked in the topic view (see “Pruning only certain topics”). Below it the ACP lists the forum's marked topics. |
 | Post age | 30 days | Posts older than this many days (1–65535). |
 | Keep first post of each topic | Yes | Yes: the first post and therefore the topic stays. No: a topic disappears once all of its posts are old. With “Yes” an old first post stays until phpBB's topic pruning (if enabled) removes the topic. |
-| Skip stickies and announcements | Yes | Posts in stickies, announcements and global announcements are never deleted. Applies to “Whole forum” only: a **marked** topic is pruned even if it is a sticky. |
+| Skip stickies and announcements | Yes | Posts in stickies, announcements and global announcements are never deleted. Applies with the scope “Whole forum” only, and there to marked topics as well (the mark is ignored there). Only with the scope “Marked topics only” is a marked topic pruned even if it is a sticky or an announcement. |
 | Reduce user post counts | No | No (like phpBB's topic pruning): the author's post count stays. Yes: it is reduced for every deleted (approved) post. |
 
 Unapproved and soft-deleted posts are deleted by age as well. The board statistics (number of posts and topics) are corrected either way.
