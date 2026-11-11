@@ -6,3 +6,31 @@ services:
             - '@request'
         tags:
             - { name: event.listener }
+
+    uflagmey.postprune.query_builder:
+        class: uflagmey\postprune\prune\query_builder
+        arguments:
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
+
+    uflagmey.postprune.pruner:
+        class: uflagmey\postprune\prune\pruner
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@log'
+            - '@user'
+            - '@uflagmey.postprune.query_builder'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    uflagmey.postprune.cron.task.prune:
+        class: uflagmey\postprune\cron\task\prune
+        arguments:
+            - '@config'
+            - '@uflagmey.postprune.pruner'
+        calls:
+            - [set_name, [uflagmey.postprune.cron.task.prune]]
+        tags:
+            - { name: cron.task }
