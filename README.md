@@ -31,6 +31,17 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 Deinstallation: Erweiterung deaktivieren und anschließend **Daten löschen**. Dabei werden die Spalten und Konfigurationswerte der Extension vollständig entfernt.
 
+### Erste Schritte / Häufige Stolpersteine
+
+1. **Einstellungen finden:** ACP → **Foren** (*Foren verwalten*). Steht das Forum in einer Kategorie, zuerst auf den **Namen der Kategorie** klicken. Dann beim eigentlichen Forum auf das **grüne Zahnrad** („Ändern“) klicken und nach unten scrollen bis zum Block **„Beitrags-Pruning (einzelne Beiträge)“**, direkt unter „Einstellungen zum automatischen Löschen“.
+2. **⚠ Nicht verwechseln** mit ACP → Foren → **„Automatisches Löschen inaktiver Themen“**. Das ist das phpBB-eigene, manuelle Löschen von Themen: Es löscht beim Absenden **sofort ganze Themen**, ohne Trockenlauf. Mit dieser Extension hat es nichts zu tun.
+3. **Der Cron läuft nur durch Seitenaufrufe im Forum**, nicht durch Seitenaufrufe im ACP. Pro Seitenaufruf erledigt phpBB höchstens **eine** fällige Aufgabe, ausgewählt per Zufall unter allen fälligen Aufgaben. War gerade keine Aufgabe fällig, prüft phpBB bis zu 60 Sekunden lang nicht erneut. Also nach dem Einschalten ein paar Forenseiten aufrufen (im Browser, als normaler Besucher) und dann im **Administrations-Protokoll** nachsehen (ACP → Wartung).
+4. **Kein Eintrag im Protokoll?** Prüfen:
+   - Ist der Modus im Forum wirklich gespeichert (Formular mit „Absenden“ bestätigt)?
+   - Ist das Forum ein normales Beitragsforum (keine Kategorie, kein Link)?
+   - Steht unter *Allgemein → Server-Konfiguration → Server und Domain* „Wiederkehrende Aufgaben über Cron-Job des Betriebssystems ausführen“ auf **Deaktiviert**? Ist es aktiviert, startet phpBB keine Aufgaben über Seitenaufrufe, dann braucht es einen System-Cronjob (siehe unten).
+   - In 1.0.0-beta1 schreibt der Trockenlauf **nur dann** einen Eintrag, wenn es mindestens einen Kandidaten gibt. Sind keine Beiträge alt genug, erscheint kein Eintrag.
+
 ### Einstellungen pro Forum
 
 ACP → **Foren → Forum bearbeiten**, Block **„Beitrags-Pruning (einzelne Beiträge)“** direkt unter den Pruning-Einstellungen. Der Block erscheint nur bei normalen Foren (nicht bei Kategorien oder Links). Kategorien und Link-Foren werden vom Cron auch dann ignoriert, wenn dort Werte gespeichert sind.
@@ -91,6 +102,17 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 3. Nothing is switched on yet: every forum starts in mode **Off**.
 
 Uninstall: disable the extension, then **Delete data**. This removes the extension's columns and config values completely.
+
+### Getting started / common pitfalls
+
+1. **Finding the settings:** ACP → **Forums** (*Manage forums*). If the forum sits inside a category, first click the **category name**. Then click the **green cog** (“Edit”) of the actual forum and scroll down to the block **“Post pruning (individual posts)”**, right below “Forum prune settings”.
+2. **⚠ Do not confuse** this with ACP → Forums → **“Prune forums”**. That is phpBB's own manual topic pruning: on submit it **immediately deletes whole topics**, without a dry run. It has nothing to do with this extension.
+3. **The cron only runs on page requests in the forum**, not on page requests in the ACP. Each page request runs at most **one** due task, picked at random among all due tasks. If no task was due, phpBB does not check again for up to 60 seconds. So after switching it on, open a few forum pages (in a browser, as a normal visitor) and then look at the **admin log** (ACP → Maintenance).
+4. **No log entry?** Check:
+   - Is the mode really saved for the forum (form confirmed with “Submit”)?
+   - Is the forum a normal forum (not a category, not a link)?
+   - Is “Run periodic tasks from operating system cron” under *General → Server configuration → Server settings* set to **Disabled**? If it is enabled, phpBB does not start tasks on page requests, so you need a system cron job (see below).
+   - In 1.0.0-beta1 the dry run writes an entry **only** if there is at least one candidate. If no post is old enough, no entry appears.
 
 ### Settings per forum
 
