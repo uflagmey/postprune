@@ -17,7 +17,7 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 ### Voraussetzungen
 
-- phpBB 3.3.3 oder neuer (3.3.x), PHP 7.2 oder neuer
+- phpBB 3.3.3 oder neuer (3.3.x), getestet mit 3.3.17 und 3.3.19; PHP 7.2 oder neuer
 - Keine Composer-Abhängigkeiten, kein Eingriff in den phpBB-Kern
 
 ### Installation
@@ -32,6 +32,8 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 Deinstallation: Erweiterung deaktivieren und anschließend **Arbeitsdaten löschen**. Dabei werden die Spalten (auch die Themen-Markierungen) und Konfigurationswerte der Extension vollständig entfernt.
 
 ### Update von einer früheren Version
+
+Gilt für ein Update von 1.0.0-beta1 oder 1.0.0-beta2. Ab 1.0.0-beta3 ist phpBB 3.3.3 oder neuer nötig (1.0.0-beta1 lief noch ab 3.3.0); ein älteres Board zuerst aktualisieren.
 
 1. **Backup** von Datenbank und `files/`.
 2. Die neuen Dateien hochladen und den Ordner `ext/uflagmey/postprune/` dabei überschreiben.
@@ -123,7 +125,7 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 
 ### Requirements
 
-- phpBB 3.3.3 or newer (3.3.x), PHP 7.2 or newer
+- phpBB 3.3.3 or newer (3.3.x), tested with 3.3.17 and 3.3.19; PHP 7.2 or newer
 - No Composer dependencies, no core changes
 
 ### Installation
@@ -138,6 +140,8 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 Uninstall: disable the extension, then **Delete data**. This removes the extension's columns (including the topic marks) and config values completely.
 
 ### Updating from an earlier version
+
+Applies to updating from 1.0.0-beta1 or 1.0.0-beta2. From 1.0.0-beta3 on, phpBB 3.3.3 or newer is required (1.0.0-beta1 still ran on 3.3.0 and later); update an older board first.
 
 1. **Backup** of database and `files/`.
 2. Upload the new files, overwriting the folder `ext/uflagmey/postprune/`.
