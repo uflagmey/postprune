@@ -33,7 +33,7 @@ Deinstallation: Erweiterung deaktivieren und anschließend **Arbeitsdaten lösch
 
 ### Update von einer früheren Version
 
-Gilt für ein Update von 1.0.0-beta1 oder 1.0.0-beta2. Ab 1.0.0-beta3 ist phpBB 3.3.3 oder neuer nötig (1.0.0-beta1 lief noch ab 3.3.0); ein älteres Board zuerst aktualisieren.
+Gilt für ein Update von 1.0.0-beta1, 1.0.0-beta2 oder 1.0.0-beta3. Ab 1.0.0-beta3 ist phpBB 3.3.3 oder neuer nötig (1.0.0-beta1 lief noch ab 3.3.0); ein älteres Board zuerst aktualisieren.
 
 1. **Backup** von Datenbank und `files/`.
 2. Die neuen Dateien hochladen und den Ordner `ext/uflagmey/postprune/` dabei überschreiben.
@@ -143,7 +143,7 @@ Uninstall: disable the extension, then **Delete data**. This removes the extensi
 
 ### Updating from an earlier version
 
-Applies to updating from 1.0.0-beta1 or 1.0.0-beta2. From 1.0.0-beta3 on, phpBB 3.3.3 or newer is required (1.0.0-beta1 still ran on 3.3.0 and later); update an older board first.
+Applies to updating from 1.0.0-beta1, 1.0.0-beta2 or 1.0.0-beta3. From 1.0.0-beta3 on, phpBB 3.3.3 or newer is required (1.0.0-beta1 still ran on 3.3.0 and later); update an older board first.
 
 1. **Backup** of database and `files/`.
 2. Upload the new files, overwriting the folder `ext/uflagmey/postprune/`.
