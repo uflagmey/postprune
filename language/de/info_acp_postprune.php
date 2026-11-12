@@ -50,5 +50,6 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ gelöscht',
 		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht',
 	],
+	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: Datenbankschema passt nicht zum Cache – bitte Cache leeren</strong>',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Beitrags-Pruning</strong><br>» Forum „%1$s“: keine markierten Themen, es wurde nichts gelöscht',
 ]);

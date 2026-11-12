@@ -263,6 +263,35 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 	}
 
 	/**
+	 * Database restored from a backup older than the cached config: the run must not abort with a fatal
+	 * SQL error (phpBB's cron_lock would stay behind), but end cleanly with one error log entry.
+	 */
+	public function test_missing_scope_column_ends_run_cleanly_with_one_critical_log()
+	{
+		$this->seed();
+		$this->db->sql_query('ALTER TABLE phpbb_forums DROP COLUMN uflagmey_pp_scope');
+		$posts = $this->db->sql_fetchfield('n', false, $this->db->sql_query('SELECT COUNT(*) AS n FROM phpbb_posts'));
+		$result = $this->pruner(2)->run(fixtures::NOW, 6);
+
+		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
+		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
+		$this->assertSame([], fixtures::$delete_calls);
+		$this->assertSame($posts, $this->db->sql_fetchfield('n', false, $this->db->sql_query('SELECT COUNT(*) AS n FROM phpbb_posts')));
+	}
+
+	public function test_missing_marked_column_ends_run_cleanly_with_one_critical_log()
+	{
+		$this->seed_scoped();
+		fixtures::forum($this->db, 2, 'B', FORUM_POST, ['uflagmey_pp_mode' => 1, 'uflagmey_pp_scope' => 1]);
+		$this->db->sql_query('ALTER TABLE phpbb_topics DROP COLUMN uflagmey_pp_marked');
+		$result = $this->pruner(2)->run(fixtures::NOW, 6);
+
+		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
+		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
+		$this->assertSame([], fixtures::$delete_calls);
+	}
+
+	/**
 	 * Forum 1 scope "marked topics only": 10 marked normal, 11 marked sticky (skip_sticky=1), 12 unmarked.
 	 */
 	protected function seed_scoped(array $forum = [], array $marked = [10, 11])

@@ -107,7 +107,11 @@ class pruner
 		$remaining = max(1, (int) $batch);
 		$backlog = false;
 		$pruned = $dryrun = $no_topics = [];
-		$forums = $this->get_forums();
+		$forums = $this->select($this->query_builder->forums_query(schema::topic_scope($this->config)));
+		if ($forums === false)
+		{
+			return $this->schema_mismatch($pruned, $dryrun);
+		}
 
 		foreach ($forums as $forum)
 		{
@@ -117,6 +121,10 @@ class pruner
 			}
 
 			$topics = $this->marked_topics($forum);
+			if ($topics === false)
+			{
+				return $this->schema_mismatch($pruned, $dryrun);
+			}
 			if ($topics === 0)
 			{
 				$no_topics[] = $forum;
@@ -124,10 +132,11 @@ class pruner
 			}
 
 			// One row more than the budget tells whether a backlog remains.
-			$sql = $this->db->sql_build_query('SELECT', $this->query_builder->candidates_query($forum, $now));
-			$result = $this->db->sql_query_limit($sql, $remaining + 1);
-			$rows = $this->db->sql_fetchrowset($result);
-			$this->db->sql_freeresult($result);
+			$rows = $this->select($this->query_builder->candidates_query($forum, $now), $remaining + 1);
+			if ($rows === false)
+			{
+				return $this->schema_mismatch($pruned, $dryrun);
+			}
 
 			if (count($rows) > $remaining)
 			{
@@ -172,6 +181,10 @@ class pruner
 				}
 
 				$topics = $this->marked_topics($forum);
+				if ($topics === false)
+				{
+					return $this->schema_mismatch($pruned, $dryrun);
+				}
 				if ($topics === 0)
 				{
 					$dryrun[(int) $forum['forum_id']] = 0;
@@ -179,10 +192,12 @@ class pruner
 					continue;
 				}
 
-				$sql = $this->db->sql_build_query('SELECT', $this->query_builder->count_query($forum, $now));
-				$result = $this->db->sql_query($sql);
-				$num = (int) $this->db->sql_fetchfield('num_posts');
-				$this->db->sql_freeresult($result);
+				$count = $this->select($this->query_builder->count_query($forum, $now));
+				if ($count === false)
+				{
+					return $this->schema_mismatch($pruned, $dryrun);
+				}
+				$num = (int) $count[0]['num_posts'];
 
 				$dryrun[(int) $forum['forum_id']] = $num;
 				if ($topics === null)
@@ -209,7 +224,7 @@ class pruner
 	 * not only those with candidates (see query_builder::marked_count_query()).
 	 *
 	 * @param array $forum
-	 * @return int|null
+	 * @return int|null|false	false: the query failed (see select())
 	 */
 	protected function marked_topics(array $forum)
 	{
@@ -218,12 +233,60 @@ class pruner
 			return null;
 		}
 
-		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->marked_count_query($forum));
-		$result = $this->db->sql_query($sql);
-		$num = (int) $this->db->sql_fetchfield('num_topics');
+		$rows = $this->select($this->query_builder->marked_count_query($forum));
+
+		return $rows === false ? false : (int) $rows[0]['num_topics'];
+	}
+
+	/**
+	 * Runs one SELECT of the cron run without aborting the request on an SQL
+	 * error. The only expected error is a database restored from a backup
+	 * older than the cached config (stale schema marker, missing column): a
+	 * fatal SQL error would leave phpBB's cron_lock behind and block every
+	 * cron task of the board for an hour.
+	 *
+	 * @param array	$query	sql_build_query() array
+	 * @param int	$limit	0: no limit
+	 * @return array|false	Rows, false on an SQL error
+	 */
+	protected function select(array $query, $limit = 0)
+	{
+		$sql = $this->db->sql_build_query('SELECT', $query);
+		$this->db->sql_return_on_error(true);
+		$result = $limit ? $this->db->sql_query_limit($sql, $limit) : $this->db->sql_query($sql);
+		$this->db->sql_return_on_error(false);
+
+		if ($result === false)
+		{
+			return false;
+		}
+
+		$rows = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
 
-		return $num;
+		return $rows ?: [];
+	}
+
+	/**
+	 * Ends the run cleanly after an SQL error: one entry in the error log,
+	 * no backlog, so the cron task closes the cycle (last_run) and phpBB
+	 * releases its cron_lock. Next attempt in the next cycle.
+	 *
+	 * @param array $pruned
+	 * @param array $dryrun
+	 * @return array
+	 */
+	protected function schema_mismatch(array $pruned, array $dryrun)
+	{
+		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
+		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
+		$this->log->add('critical', $user_id, $ip, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', false, []);
+
+		return [
+			'backlog'	=> false,
+			'pruned'	=> $pruned,
+			'dryrun'	=> $dryrun,
+		];
 	}
 
 	/**

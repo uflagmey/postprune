@@ -50,5 +50,6 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topics in forum “%1$s”',
 		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s”',
 	],
+	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: database schema does not match the cache – please purge the cache</strong>',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Post pruning</strong><br>» Forum “%1$s”: no marked topics, nothing deleted',
 ]);
