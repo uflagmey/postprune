@@ -21,17 +21,8 @@
 		</dl>
 		<dl id="uflagmey_pp_marked">
 			<dt><label>{{ lang('UFLAGMEY_PP_MARKED_TOPICS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN') }}</span></dt>
-			<dd>
-				{% if UFLAGMEY_PP_MARKED_INACTIVE %}<p class="uflagmey-pp-marked-inactive"><strong>{{ UFLAGMEY_PP_MARKED_INACTIVE }}</strong></p>{% endif %}
-				{% if UFLAGMEY_PP_MARKED|length %}
-				<ul class="uflagmey-pp-marked-list">
-					{% for topic in UFLAGMEY_PP_MARKED %}<li><a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }})</li>
-					{% endfor %}
-				</ul>
-				{% else %}
-				<span class="uflagmey-pp-marked-none">{{ lang('UFLAGMEY_PP_MARKED_NONE') }}</span>
-				{% endif %}
-			</dd>
+			{% if UFLAGMEY_PP_MARKED_INACTIVE %}<dd class="uflagmey-pp-marked-inactive">{{ UFLAGMEY_PP_MARKED_INACTIVE }}</dd>{% endif %}
+			<dd class="uflagmey-pp-marked-list">{% for topic in UFLAGMEY_PP_MARKED %}{% if not loop.first %}<br>{% endif %}<a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }}){% else %}{{ lang('UFLAGMEY_PP_MARKED_NONE') }}{% endfor %}</dd>
 		</dl>
 		{% endif %}
 		<dl>
