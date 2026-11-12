@@ -76,6 +76,23 @@ class query_builder
 	}
 
 	/**
+	 * Number of forums with post pruning switched on, for cron::is_runnable(),
+	 * which phpBB calls on ordinary page requests. Uses only columns that exist
+	 * since 1.0.0-beta1, so a stale cache after a database restore cannot break
+	 * the board's pages.
+	 *
+	 * @return array
+	 */
+	public function active_forums_count_query()
+	{
+		$query = $this->forums_query();
+		$query['SELECT'] = 'COUNT(f.forum_id) AS num_forums';
+		unset($query['ORDER_BY']);
+
+		return $query;
+	}
+
+	/**
 	 * Topics of one forum that are marked for pruning (ACP list). Only valid
 	 * with schema::topic_scope().
 	 *

@@ -74,6 +74,21 @@ class pruner
 	}
 
 	/**
+	 * At least one post forum has post pruning switched on. Independent of the
+	 * schema marker (see query_builder::active_forums_count_query()).
+	 *
+	 * @return bool
+	 */
+	public function has_forums()
+	{
+		$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $this->query_builder->active_forums_count_query()));
+		$num = (int) $this->db->sql_fetchfield('num_forums');
+		$this->db->sql_freeresult($result);
+
+		return $num > 0;
+	}
+
+	/**
 	 * One cron run. Active forums are processed first, oldest posts first, at
 	 * most $batch posts in total. Dry-run forums are only counted and logged
 	 * when no backlog is left, so a backlog that is worked off over several

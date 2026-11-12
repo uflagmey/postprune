@@ -232,6 +232,15 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		$this->assertStringContainsString('f.uflagmey_pp_scope', $qb->forums_query(true)['SELECT']);
 	}
 
+	public function test_active_forums_count_query_uses_no_beta3_column()
+	{
+		$qb = fixtures::query_builder();
+		$sql = fixtures::db()->sql_build_query('SELECT', $qb->active_forums_count_query());
+		$this->assertStringNotContainsString('uflagmey_pp_scope', $sql);
+		$this->assertStringNotContainsString('uflagmey_pp_marked', $sql);
+		$this->assertSame($qb->forums_query()['WHERE'], $qb->active_forums_count_query()['WHERE']);
+	}
+
 	public function test_marked_count_query_ignores_shadow_topics_and_other_forums()
 	{
 		$db = fixtures::db();

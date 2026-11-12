@@ -43,6 +43,8 @@ Die Einstellungen der Foren bleiben dabei erhalten. Der neue Geltungsbereich ste
 
 Wird Schritt 3 ausgelassen (oder nur der Cache geleert), geht nichts kaputt: Die Extension arbeitet weiter wie die Vorversion, nur die neuen Funktionen erscheinen nicht. Sobald der Cache geleert wurde, steht im Forum-Formular im ACP ein Hinweis, dass die Erweiterung einmal deaktiviert und wieder aktiviert werden muss.
 
+Nach dem Zurückspielen eines Datenbank-Backups immer den Cache leeren (ACP → Allgemein → „Cache leeren“), siehe Stolperstein 9.
+
 ### Erste Schritte / Häufige Stolpersteine
 
 1. **Einstellungen finden:** ACP → **Foren** (*Foren verwalten*). Steht das Forum in einer Kategorie, zuerst auf den **Namen der Kategorie** klicken. Dann beim eigentlichen Forum auf das **grüne Zahnrad** („Ändern“) klicken und nach unten scrollen bis zum Block **„Beitrags-Pruning (einzelne Beiträge)“**, direkt unter „Einstellungen zum automatischen Löschen“.
@@ -57,7 +59,7 @@ Wird Schritt 3 ausgelassen (oder nur der Cache geleert), geht nichts kaputt: Die
 6. **Verschieben entfernt die Markierung.** Wird ein markiertes Thema in ein anderes Forum verschoben, verliert es seine Markierung, mit Eintrag im Administrations-Protokoll. Das gilt auch, wenn ein Forum gelöscht oder umgewandelt und sein Inhalt dabei verschoben wird. Im Zielforum muss das Thema bei Bedarf neu markiert werden.
 7. **Zusammenführen in ein markiertes Thema:** Die übernommenen Beiträge gehören danach zum markierten Thema und werden künftig mitgekürzt. Sie behalten ihr ursprüngliches Datum: Sind sie schon alt genug, werden sie beim nächsten Lauf gelöscht.
 8. **Menüeintrag „Automatisch kürzen“ fehlt?** Er erscheint nur für Administratoren mit dem Recht *Kann Foren verwalten* (`a_forum`) und nur, wenn das Update abgeschlossen ist (siehe „Update von einer früheren Version“).
-9. **Datenbank-Backup zurückgespielt?** Danach **immer zuerst den Cache leeren** (ACP → Allgemein → „Cache leeren“), bevor die Erweiterung deaktiviert und wieder aktiviert wird. Sonst arbeitet phpBB noch mit den zwischengespeicherten Werten aus der Zeit vor dem Zurückspielen: Stammt das Backup aus der Zeit vor dem Update, bricht die geplante Aufgabe bis zum Cache-Leeren mit einem Datenbankfehler ab, und das Markieren von Themen kann mit einem Fehler 403 enden. Abhilfe, falls es schon passiert ist: Cache leeren, Erweiterung deaktivieren und wieder aktivieren (**nicht** „Arbeitsdaten löschen“). Einstellungen und Markierungen bleiben dabei erhalten.
+9. **Datenbank-Backup zurückgespielt?** Nach dem Zurückspielen eines Datenbank-Backups **immer den Cache leeren** (ACP → Allgemein → „Cache leeren“), und zwar bevor die Erweiterung deaktiviert und wieder aktiviert wird. Sonst arbeitet phpBB noch mit den zwischengespeicherten Werten aus der Zeit vor dem Zurückspielen: Stammt das Backup aus der Zeit vor dem Update, bricht die geplante Aufgabe der Extension bis zum Cache-Leeren mit einem Datenbankfehler ab (die Seiten des Boards bleiben erreichbar), und das Markieren von Themen kann mit einem Fehler 403 enden. Abhilfe, falls es schon passiert ist: Cache leeren, Erweiterung deaktivieren und wieder aktivieren (**nicht** „Arbeitsdaten löschen“). Einstellungen und Markierungen bleiben dabei erhalten.
 
 ### Einstellungen pro Forum
 
@@ -151,6 +153,8 @@ Your forum settings are kept. The new scope is set to “Whole forum” for ever
 
 If step 3 is skipped (or only the cache is purged), nothing breaks: the extension keeps working like the previous version, only the new features do not appear. Once the cache has been purged, the forum form in the ACP shows a notice that the extension has to be disabled and enabled once.
 
+After restoring a database backup always purge the cache (ACP → General → “Purge the cache”), see pitfall 9.
+
 ### Getting started / common pitfalls
 
 1. **Finding the settings:** ACP → **Forums** (*Manage forums*). If the forum sits inside a category, first click the **category name**. Then click the **green cog** (“Edit”) of the actual forum and scroll down to the block **“Post pruning (individual posts)”**, right below “Forum prune settings”.
@@ -165,7 +169,7 @@ If step 3 is skipped (or only the cache is purged), nothing breaks: the extensio
 6. **Moving removes the mark.** A marked topic moved to another forum loses its mark, with an admin log entry. This also applies when a forum is deleted or converted and its content is moved. Mark the topic again in the target forum if needed.
 7. **Merging into a marked topic:** the merged posts then belong to the marked topic and are pruned from then on. They keep their original date: if they are already old enough, they are deleted on the next run.
 8. **Menu entry “Prune automatically” missing?** It is only shown to administrators with the permission *Can manage forums* (`a_forum`), and only once the update is complete (see “Updating from an earlier version”).
-9. **Restored a database backup?** Afterwards **always purge the cache first** (ACP → General → “Purge the cache”) before disabling and enabling the extension. Otherwise phpBB keeps working with the cached values from before the restore: if the backup is from before the update, the scheduled task fails with a database error until the cache is purged, and marking topics can end with an error 403. Remedy if it has already happened: purge the cache, disable and enable the extension (**not** “Delete data”). Settings and marks are kept.
+9. **Restored a database backup?** After restoring a database backup **always purge the cache** (ACP → General → “Purge the cache”), before disabling and enabling the extension. Otherwise phpBB keeps working with the cached values from before the restore: if the backup is from before the update, the extension's scheduled task fails with a database error until the cache is purged (the board's pages stay reachable), and marking topics can end with an error 403. Remedy if it has already happened: purge the cache, disable and enable the extension (**not** “Delete data”). Settings and marks are kept.
 
 ### Settings per forum
 

@@ -242,6 +242,26 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([], $this->logs);
 	}
 
+	public function test_has_forums_counts_post_forums_with_mode_only()
+	{
+		fixtures::forum($this->db, 1, 'A', FORUM_POST, ['uflagmey_pp_mode' => 0]);
+		fixtures::forum($this->db, 2, 'C', FORUM_CAT, ['uflagmey_pp_mode' => 2]);
+		$this->assertFalse($this->pruner(2)->has_forums());
+		fixtures::forum($this->db, 3, 'D', FORUM_POST, ['uflagmey_pp_mode' => 1]);
+		$this->assertTrue($this->pruner(2)->has_forums());
+	}
+
+	/**
+	 * Database restored from a beta2 backup while the cached config still claims schema 2:
+	 * has_forums() (cron::is_runnable(), page requests) must not touch the missing column.
+	 */
+	public function test_has_forums_works_with_stale_schema_marker_and_missing_scope_column()
+	{
+		fixtures::forum($this->db, 1, 'A', FORUM_POST, ['uflagmey_pp_mode' => 2]);
+		$this->db->sql_query('ALTER TABLE phpbb_forums DROP COLUMN uflagmey_pp_scope');
+		$this->assertTrue($this->pruner(2)->has_forums());
+	}
+
 	/**
 	 * Forum 1 scope "marked topics only": 10 marked normal, 11 marked sticky (skip_sticky=1), 12 unmarked.
 	 */

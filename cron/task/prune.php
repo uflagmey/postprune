@@ -32,13 +32,15 @@ class prune extends \phpbb\cron\task\base
 	}
 
 	/**
-	 * At least one post forum has post pruning switched on.
+	 * At least one post forum has post pruning switched on. phpBB asks this on
+	 * ordinary page requests (page footer cron check), so it must work in any
+	 * schema state (pruner::has_forums()).
 	 *
 	 * @return bool
 	 */
 	public function is_runnable()
 	{
-		return count($this->pruner->get_forums()) > 0;
+		return $this->pruner->has_forums();
 	}
 
 	/**
