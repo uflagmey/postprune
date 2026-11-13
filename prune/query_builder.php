@@ -76,6 +76,23 @@ class query_builder
 	}
 
 	/**
+	 * Stored settings of one forum (ACP form: values for settings missing from the POST).
+	 *
+	 * @param int	$forum_id
+	 * @param bool	$topic_scope	Include the scope column (schema::topic_scope())
+	 * @return array
+	 */
+	public function forum_settings_query($forum_id, $topic_scope = false)
+	{
+		return [
+			'SELECT'	=> 'f.uflagmey_pp_mode, f.uflagmey_pp_days, f.uflagmey_pp_keep_first, f.uflagmey_pp_skip_sticky, f.uflagmey_pp_count_sync'
+				. ($topic_scope ? ', f.uflagmey_pp_scope' : ''),
+			'FROM'		=> [$this->forums_table => 'f'],
+			'WHERE'		=> 'f.forum_id = ' . (int) $forum_id,
+		];
+	}
+
+	/**
 	 * Number of forums with post pruning switched on, for cron::is_runnable(),
 	 * which phpBB calls on ordinary page requests. Uses only columns that exist
 	 * since 1.0.0-beta1, so a stale cache after a database restore cannot break

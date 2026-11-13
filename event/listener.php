@@ -114,19 +114,67 @@ class listener implements EventSubscriberInterface
 
 	/**
 	 * Read the submitted settings into the forum data that core will save.
+	 * Only fields that are actually in the POST count. A setting missing from
+	 * the POST (form rendered without our fields, another tool posting the
+	 * form) keeps the forum's stored value on edit, both when saving and when
+	 * core redisplays the form after a validation error; a new forum gets the
+	 * default.
 	 *
 	 * @param \phpbb\event\data $event
 	 */
 	public function request_data($event)
 	{
 		$forum_data = $event['forum_data'];
+		$edit = ($event['action'] === 'edit' && !empty($forum_data['forum_id']));
+		$stored = null;
 
 		foreach ($this->settings() as $key => $default)
 		{
-			$forum_data[$key] = $this->request->variable($key, $default);
+			if ($this->request->is_set_post($key))
+			{
+				$forum_data[$key] = $this->request->variable($key, $default);
+			}
+			else if (!$edit)
+			{
+				$forum_data[$key] = $default;
+			}
+			else
+			{
+				if ($stored === null)
+				{
+					$stored = $this->stored_settings((int) $forum_data['forum_id']);
+				}
+
+				// Unknown forum or outdated container: leave the key out, core does not touch the column.
+				if (isset($stored[$key]))
+				{
+					$forum_data[$key] = (int) $stored[$key];
+				}
+			}
 		}
 
 		$event['forum_data'] = $forum_data;
+	}
+
+	/**
+	 * Stored per-forum settings of one forum.
+	 *
+	 * @param int $forum_id
+	 * @return array Empty if the forum does not exist or the container is outdated (no db / query builder)
+	 */
+	protected function stored_settings($forum_id)
+	{
+		if ($this->db === null || $this->query_builder === null)
+		{
+			return [];
+		}
+
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forum_settings_query($forum_id, $this->topic_scope()));
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		return $row ?: [];
 	}
 
 	/**
