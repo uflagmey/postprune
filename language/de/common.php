@@ -20,7 +20,7 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SETTINGS'				=> 'Beitrags-Pruning (einzelne Beiträge)',
-	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Löscht in diesem Forum einzelne Beiträge samt Dateianhängen automatisch und endgültig, sobald sie älter als die eingestellte Anzahl Tage sind. Anders als das Themen-Pruning oben arbeitet dies auf Beitragsebene.',
+	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Löscht in diesem Forum einzelne Beiträge samt Dateianhängen automatisch und endgültig, nach der eingestellten Löschregel (nach Alter oder nach Anzahl). Anders als das Themen-Pruning oben arbeitet dies auf Beitragsebene.',
 	'UFLAGMEY_PP_MODE'					=> 'Modus Beitrags-Pruning',
 	'UFLAGMEY_PP_MODE_EXPLAIN'			=> 'Aus: Es passiert nichts. Trockenlauf: Es wird nur im Administrations-Protokoll vermerkt, wie viele Beiträge gelöscht würden. Aktiv: Beiträge werden endgültig gelöscht.',
 	'UFLAGMEY_PP_MODE_OFF'				=> 'Aus',
@@ -68,4 +68,31 @@ $lang = array_merge($lang, [
 		2	=> 'Trockenlauf aktiv: Beiträge in diesem Thema, die älter als %d Tage sind, würden gelöscht. Nur für Administratoren sichtbar.',
 	],
 	'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN'	=> 'Der erste Beitrag bliebe erhalten.',
+	'UFLAGMEY_PP_RULE'					=> 'Löschregel',
+	'UFLAGMEY_PP_RULE_EXPLAIN'			=> 'Nach Alter: Beiträge, die älter als die eingestellte Anzahl Tage sind, werden gelöscht. Nach Anzahl: Je Thema bleiben nur die neuesten freigegebenen Beiträge erhalten, ältere werden gelöscht, auch ungeprüfte und gelöschte. „Nach Anzahl“ ist nur mit dem Geltungsbereich „Nur markierte Themen“ möglich.',
+	'UFLAGMEY_PP_RULE_AGE'				=> 'Nach Alter',
+	'UFLAGMEY_PP_RULE_COUNT'			=> 'Nach Anzahl',
+	'UFLAGMEY_PP_KEEP_COUNT'			=> 'Anzahl behalten',
+	'UFLAGMEY_PP_KEEP_COUNT_EXPLAIN'	=> 'So viele der neuesten freigegebenen Beiträge bleiben je Thema erhalten. Mit „Ersten Beitrag behalten“ bleibt der erste Beitrag zusätzlich stehen.',
+	'UFLAGMEY_PP_ONLY_RULE_AGE'			=> 'Gilt nur bei der Löschregel „Nach Alter“.',
+	'UFLAGMEY_PP_ONLY_RULE_COUNT'		=> 'Gilt nur bei der Löschregel „Nach Anzahl“.',
+	'UFLAGMEY_PP_ERR_RULE'				=> 'Beitrags-Pruning: Ungültige Löschregel.',
+	'UFLAGMEY_PP_ERR_RULE_SCOPE'		=> 'Beitrags-Pruning: Die Löschregel „Nach Anzahl“ ist nur mit dem Geltungsbereich „Nur markierte Themen“ möglich.',
+	'UFLAGMEY_PP_ERR_KEEP_COUNT'		=> 'Beitrags-Pruning: Die Anzahl der behaltenen Beiträge muss zwischen %1$d und %2$d liegen.',
+	'UFLAGMEY_PP_NOTICE_COUNT'			=> [
+		1	=> 'In diesem Thema bleibt nur der neueste Beitrag erhalten.',
+		2	=> 'In diesem Thema bleiben nur die neuesten %d Beiträge erhalten.',
+	],
+	'UFLAGMEY_PP_NOTICE_COUNT_KEEP_FIRST'	=> [
+		1	=> 'In diesem Thema bleibt nur der neueste Beitrag erhalten, sowie der erste Beitrag.',
+		2	=> 'In diesem Thema bleiben nur die neuesten %d Beiträge erhalten, sowie der erste Beitrag.',
+	],
+	'UFLAGMEY_PP_NOTICE_COUNT_DRYRUN'	=> [
+		1	=> 'Trockenlauf aktiv: In diesem Thema bliebe nur der neueste Beitrag erhalten. Nur für Administratoren sichtbar.',
+		2	=> 'Trockenlauf aktiv: In diesem Thema blieben nur die neuesten %d Beiträge erhalten. Nur für Administratoren sichtbar.',
+	],
+	'UFLAGMEY_PP_NOTICE_COUNT_KEEP_FIRST_DRYRUN'	=> [
+		1	=> 'Trockenlauf aktiv: In diesem Thema bliebe nur der neueste Beitrag erhalten, sowie der erste Beitrag. Nur für Administratoren sichtbar.',
+		2	=> 'Trockenlauf aktiv: In diesem Thema blieben nur die neuesten %d Beiträge erhalten, sowie der erste Beitrag. Nur für Administratoren sichtbar.',
+	],
 ]);

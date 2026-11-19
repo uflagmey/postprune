@@ -33,7 +33,8 @@ namespace uflagmey\postprune\tests\prune
 			$db->sql_connect(':memory:', '', '', '');
 			$db->sql_query('CREATE TABLE phpbb_forums (forum_id INTEGER PRIMARY KEY, forum_name TEXT, forum_type INTEGER,
 				uflagmey_pp_mode INTEGER DEFAULT 0, uflagmey_pp_days INTEGER DEFAULT 30, uflagmey_pp_keep_first INTEGER DEFAULT 1,
-				uflagmey_pp_skip_sticky INTEGER DEFAULT 1, uflagmey_pp_count_sync INTEGER DEFAULT 0, uflagmey_pp_scope INTEGER DEFAULT 0)');
+				uflagmey_pp_skip_sticky INTEGER DEFAULT 1, uflagmey_pp_count_sync INTEGER DEFAULT 0, uflagmey_pp_scope INTEGER DEFAULT 0,
+				uflagmey_pp_rule INTEGER DEFAULT 0, uflagmey_pp_keep_count INTEGER DEFAULT 100)');
 			$db->sql_query('CREATE TABLE phpbb_topics (topic_id INTEGER PRIMARY KEY, forum_id INTEGER, topic_type INTEGER, topic_first_post_id INTEGER,
 				topic_title TEXT DEFAULT \'\', topic_moved_id INTEGER DEFAULT 0, uflagmey_pp_marked INTEGER DEFAULT 0)');
 			$db->sql_query('CREATE TABLE phpbb_posts (post_id INTEGER PRIMARY KEY, topic_id INTEGER, forum_id INTEGER, post_time INTEGER, post_visibility INTEGER)');

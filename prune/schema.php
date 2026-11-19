@@ -23,6 +23,9 @@ class schema
 	/** @var int Schema version that brings forum scope and topic marks (m2_topic_scope) */
 	const TOPIC_SCOPE = 2;
 
+	/** @var int Schema version that brings the deletion rule "keep the newest X posts" (m3_keep_count) */
+	const KEEP_COUNT = 3;
+
 	/**
 	 * @param \phpbb\config\config|null $config	null: the service was built by an
 	 *											outdated container, so the update is incomplete
@@ -42,5 +45,16 @@ class schema
 	public static function topic_scope($config)
 	{
 		return self::version($config) >= self::TOPIC_SCOPE;
+	}
+
+	/**
+	 * Deletion rule and keep count may be used.
+	 *
+	 * @param \phpbb\config\config|null $config
+	 * @return bool
+	 */
+	public static function keep_count($config)
+	{
+		return self::version($config) >= self::KEEP_COUNT;
 	}
 }

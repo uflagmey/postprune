@@ -25,10 +25,25 @@
 			<dd class="uflagmey-pp-marked-list">{% for topic in UFLAGMEY_PP_MARKED %}{% if not loop.first %}<br>{% endif %}<a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }}){% else %}{{ lang('UFLAGMEY_PP_MARKED_NONE') }}{% endfor %}</dd>
 		</dl>
 		{% endif %}
+		{% if S_UFLAGMEY_PP_KEEP_COUNT %}
 		<dl>
-			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}</span></dt>
+			<dt><label for="uflagmey_pp_rule">{{ lang('UFLAGMEY_PP_RULE') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_RULE_EXPLAIN') }}</span></dt>
+			<dd><select id="uflagmey_pp_rule" name="uflagmey_pp_rule">
+				<option value="0"{% if UFLAGMEY_PP_RULE == 0 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_RULE_AGE') }}</option>
+				<option value="1"{% if UFLAGMEY_PP_RULE == 1 %} selected{% endif %}>{{ lang('UFLAGMEY_PP_RULE_COUNT') }}</option>
+			</select></dd>
+		</dl>
+		{% endif %}
+		<dl>
+			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}{% if S_UFLAGMEY_PP_KEEP_COUNT %} {{ lang('UFLAGMEY_PP_ONLY_RULE_AGE') }}{% endif %}</span></dt>
 			<dd><input type="number" id="uflagmey_pp_days" name="uflagmey_pp_days" value="{{ UFLAGMEY_PP_DAYS }}" min="1" max="{{ UFLAGMEY_PP_DAYS_MAX }}"> {{ lang('DAYS') }}</dd>
 		</dl>
+		{% if S_UFLAGMEY_PP_KEEP_COUNT %}
+		<dl>
+			<dt><label for="uflagmey_pp_keep_count">{{ lang('UFLAGMEY_PP_KEEP_COUNT') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_KEEP_COUNT_EXPLAIN') }} {{ lang('UFLAGMEY_PP_ONLY_RULE_COUNT') }}</span></dt>
+			<dd><input type="number" id="uflagmey_pp_keep_count" name="uflagmey_pp_keep_count" value="{{ UFLAGMEY_PP_KEEP_COUNT }}" min="{{ UFLAGMEY_PP_KEEP_COUNT_MIN }}" max="{{ UFLAGMEY_PP_KEEP_COUNT_MAX }}"> {{ lang('POSTS') }}</dd>
+		</dl>
+		{% endif %}
 		<dl>
 			<dt><label for="uflagmey_pp_keep_first">{{ lang('UFLAGMEY_PP_KEEP_FIRST') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_KEEP_FIRST_EXPLAIN') }}</span></dt>
 			<dd><label><input type="radio" class="radio" name="uflagmey_pp_keep_first" value="1"{% if S_UFLAGMEY_PP_KEEP_FIRST %} id="uflagmey_pp_keep_first" checked{% endif %}> {{ lang('YES') }}</label>

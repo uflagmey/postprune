@@ -40,10 +40,11 @@ class listener_test extends \PHPUnit\Framework\TestCase
 
 	/**
 	 * @param array	$post		Posted fields
-	 * @param bool	$current	Current container (db + query builder) and schema marker 2
+	 * @param bool	$current	Current container (db + query builder) and schema marker $schema
+	 * @param int	$schema		Schema marker (2 = beta3/beta4, 3 = beta5 keep count)
 	 * @return listener
 	 */
-	protected function listener(array $post, $current = true)
+	protected function listener(array $post, $current = true, $schema = 2)
 	{
 		$this->seed();
 		$request = $this->createMock(\phpbb\request\request_interface::class);
@@ -60,9 +61,12 @@ class listener_test extends \PHPUnit\Framework\TestCase
 			return $value;
 		});
 		$language = $this->createMock(\phpbb\language\language::class);
+		$language->method('lang')->willReturnCallback(function () {
+			return implode('|', func_get_args());
+		});
 
 		return $current
-			? new listener($language, $request, new \phpbb\config\config(['uflagmey_pp_schema' => 2]), $this->db, fixtures::query_builder())
+			? new listener($language, $request, new \phpbb\config\config(['uflagmey_pp_schema' => $schema]), $this->db, fixtures::query_builder())
 			: new listener($language, $request);
 	}
 
@@ -168,5 +172,58 @@ class listener_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(['1', '90', '0', '0', '1', '1'], array_map('strval', array_values($row)));
 
 		$this->assertStringNotContainsString('uflagmey_pp_scope', $qb->forum_settings_query(3, false)['SELECT']);
+	}
+
+	/**
+	 * @return array errors after core.acp_manage_forums_validate_data
+	 */
+	protected function validate(listener $listener, array $forum_data)
+	{
+		$event = new \phpbb\event\data(['forum_data' => $forum_data, 'errors' => []]);
+		$listener->validate_data($event);
+
+		return $event['errors'];
+	}
+
+	public function test_schema_3_edit_without_rule_fields_keeps_the_stored_values()
+	{
+		$listener = $this->listener(['uflagmey_pp_mode' => '1'], true, 3);	// seeds a fresh board
+		$this->db->sql_query('UPDATE phpbb_forums SET uflagmey_pp_rule = 1, uflagmey_pp_keep_count = 250 WHERE forum_id = 3');
+		$data = $this->request_data($listener, 'edit', ['forum_id' => 3]);
+
+		$this->assertSame(1, $data['uflagmey_pp_rule']);
+		$this->assertSame(250, $data['uflagmey_pp_keep_count']);
+		$this->assertSame(1, $data['uflagmey_pp_scope']);
+	}
+
+	public function test_schema_3_add_gets_rule_defaults_schema_2_has_no_rule()
+	{
+		$data = $this->request_data($this->listener([], true, 3), 'add', ['parent_id' => 0]);
+		$this->assertSame(0, $data['uflagmey_pp_rule']);
+		$this->assertSame(100, $data['uflagmey_pp_keep_count']);
+
+		$data = $this->request_data($this->listener(['uflagmey_pp_rule' => '1'], true, 2), 'add', ['parent_id' => 0]);
+		$this->assertArrayNotHasKey('uflagmey_pp_rule', $data, 'without marker 3 the rule is not taken, even if posted');
+	}
+
+	public function test_rule_count_requires_scope_marked()
+	{
+		$base = ['uflagmey_pp_mode' => 1, 'uflagmey_pp_days' => 30, 'uflagmey_pp_keep_count' => 100];
+		$listener = $this->listener([], true, 3);
+
+		$this->assertSame(['UFLAGMEY_PP_ERR_RULE_SCOPE'], $this->validate($listener, $base + ['uflagmey_pp_rule' => 1, 'uflagmey_pp_scope' => 0]));
+		$this->assertSame([], $this->validate($listener, $base + ['uflagmey_pp_rule' => 1, 'uflagmey_pp_scope' => 1]));
+		$this->assertSame([], $this->validate($listener, $base + ['uflagmey_pp_rule' => 0, 'uflagmey_pp_scope' => 0]));
+		$this->assertSame(['UFLAGMEY_PP_ERR_RULE'], $this->validate($listener, $base + ['uflagmey_pp_rule' => 2, 'uflagmey_pp_scope' => 1]));
+	}
+
+	public function test_keep_count_range()
+	{
+		$listener = $this->listener([], true, 3);
+		$base = ['uflagmey_pp_mode' => 1, 'uflagmey_pp_days' => 30, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_scope' => 1];
+		foreach ([1 => [], 65535 => [], 0 => ['UFLAGMEY_PP_ERR_KEEP_COUNT|1|65535'], 65536 => ['UFLAGMEY_PP_ERR_KEEP_COUNT|1|65535']] as $x => $errors)
+		{
+			$this->assertSame($errors, $this->validate($listener, $base + ['uflagmey_pp_keep_count' => $x]), "X = $x");
+		}
 	}
 }

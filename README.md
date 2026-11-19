@@ -18,6 +18,7 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 ### Voraussetzungen
 
 - phpBB 3.3.3 oder neuer (3.3.x), getestet mit 3.3.17 und 3.3.19; PHP 7.2 oder neuer
+- Datenbank: getestet mit MySQL/MariaDB, PostgreSQL und SQLite
 - Keine Composer-Abhängigkeiten, kein Eingriff in den phpBB-Kern
 
 ### Installation
@@ -128,6 +129,7 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 ### Requirements
 
 - phpBB 3.3.3 or newer (3.3.x), tested with 3.3.17 and 3.3.19; PHP 7.2 or newer
+- Database: tested with MySQL/MariaDB, PostgreSQL and SQLite
 - No Composer dependencies, no core changes
 
 ### Installation

@@ -65,7 +65,7 @@ class pruner
 	 */
 	public function get_forums()
 	{
-		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query(schema::topic_scope($this->config)));
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query(schema::topic_scope($this->config), schema::keep_count($this->config)));
 		$result = $this->db->sql_query($sql);
 		$forums = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
@@ -107,7 +107,7 @@ class pruner
 		$remaining = max(1, (int) $batch);
 		$backlog = false;
 		$pruned = $dryrun = $no_topics = [];
-		$forums = $this->select($this->query_builder->forums_query(schema::topic_scope($this->config)));
+		$forums = $this->select($this->query_builder->forums_query(schema::topic_scope($this->config), schema::keep_count($this->config)));
 		if ($forums === false)
 		{
 			return $this->schema_mismatch($pruned, $dryrun);
@@ -131,8 +131,14 @@ class pruner
 				continue;
 			}
 
+			$bounds = $this->bounds($forum);
+			if ($bounds === false)
+			{
+				return $this->schema_mismatch($pruned, $dryrun);
+			}
+
 			// One row more than the budget tells whether a backlog remains.
-			$rows = $this->select($this->query_builder->candidates_query($forum, $now), $remaining + 1);
+			$rows = ($bounds === null || $bounds) ? $this->select($this->query_builder->candidates_query($forum, $now, (array) $bounds), $remaining + 1) : [];
 			if ($rows === false)
 			{
 				return $this->schema_mismatch($pruned, $dryrun);
@@ -155,14 +161,7 @@ class pruner
 
 			if ($deleted)
 			{
-				if ($topics === null)
-				{
-					$this->add_log('LOG_UFLAGMEY_PP_PRUNED', [$forum['forum_name'], $deleted]);
-				}
-				else
-				{
-					$this->add_log($topics === 1 ? 'LOG_UFLAGMEY_PP_PRUNED_TOPIC' : 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', [$forum['forum_name'], $deleted, $topics]);
-				}
+				$this->log_result('LOG_UFLAGMEY_PP_PRUNED', $forum, $deleted, $topics);
 			}
 		}
 
@@ -192,7 +191,13 @@ class pruner
 					continue;
 				}
 
-				$count = $this->select($this->query_builder->count_query($forum, $now));
+				$bounds = $this->bounds($forum);
+				if ($bounds === false)
+				{
+					return $this->schema_mismatch($pruned, $dryrun);
+				}
+
+				$count = ($bounds === null || $bounds) ? $this->select($this->query_builder->count_query($forum, $now, (array) $bounds)) : [['num_posts' => 0]];
 				if ($count === false)
 				{
 					return $this->schema_mismatch($pruned, $dryrun);
@@ -200,14 +205,7 @@ class pruner
 				$num = (int) $count[0]['num_posts'];
 
 				$dryrun[(int) $forum['forum_id']] = $num;
-				if ($topics === null)
-				{
-					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN', [$forum['forum_name'], $num]);
-				}
-				else
-				{
-					$this->add_log($topics === 1 ? 'LOG_UFLAGMEY_PP_DRYRUN_TOPIC' : 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', [$forum['forum_name'], $num, $topics]);
-				}
+				$this->log_result('LOG_UFLAGMEY_PP_DRYRUN', $forum, $num, $topics);
 			}
 		}
 
@@ -216,6 +214,77 @@ class pruner
 			'pruned'	=> $pruned,
 			'dryrun'	=> $dryrun,
 		];
+	}
+
+	/**
+	 * Rule "count": boundary per topic, i.e. the X-th newest approved post
+	 * (query_builder::boundary_query()). Recomputed on every run, so posts
+	 * written in the meantime move it. Topics with fewer than X approved
+	 * posts get no boundary and lose nothing.
+	 *
+	 * @param array $forum
+	 * @return array|null|false	[topic_id => [post_time, post_id]]; null: rule "age"; false: a query failed
+	 */
+	protected function bounds(array $forum)
+	{
+		if ($this->query_builder->rule($forum) !== query_builder::RULE_COUNT)
+		{
+			return null;
+		}
+
+		$topics = $this->select($this->query_builder->count_topics_query($forum));
+		if ($topics === false)
+		{
+			return false;
+		}
+
+		$x = $this->query_builder->keep_count($forum);
+		$bounds = [];
+		foreach ($topics as $topic)
+		{
+			$rows = $this->select($this->query_builder->boundary_query($forum, $topic), $x);
+			if ($rows === false)
+			{
+				return false;
+			}
+
+			$bound = $this->query_builder->boundary($rows, $x);
+			if ($bound !== null)
+			{
+				$bounds[(int) $topic['topic_id']] = $bound;
+			}
+		}
+
+		return $bounds;
+	}
+
+	/**
+	 * Log entry of a dry run or a deletion. Scope "whole forum": $prefix;
+	 * "marked topics only": $prefix_TOPIC(S), rule "count" $prefix_KEEP_TOPIC(S)
+	 * with X as fourth value.
+	 *
+	 * @param string	$prefix	LOG_UFLAGMEY_PP_DRYRUN or LOG_UFLAGMEY_PP_PRUNED
+	 * @param array		$forum
+	 * @param int		$num	Number of posts
+	 * @param int|null	$topics	Number of marked topics, null for scope "whole forum"
+	 */
+	protected function log_result($prefix, array $forum, $num, $topics)
+	{
+		if ($topics === null)
+		{
+			$this->add_log($prefix, [$forum['forum_name'], $num]);
+			return;
+		}
+
+		$suffix = ($topics === 1) ? '_TOPIC' : '_TOPICS';
+		if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
+		{
+			$this->add_log($prefix . '_KEEP' . $suffix, [$forum['forum_name'], $num, $topics, $this->query_builder->keep_count($forum)]);
+		}
+		else
+		{
+			$this->add_log($prefix . $suffix, [$forum['forum_name'], $num, $topics]);
+		}
 	}
 
 	/**
@@ -326,7 +395,8 @@ class pruner
 
 	/**
 	 * Log data: forum name first, then the post count (phpBB picks the plural
-	 * form by the first integer), then the number of marked topics if any.
+	 * form by the first integer), then the number of marked topics if any,
+	 * then the keep count X for rule "count".
 	 *
 	 * @param string	$operation
 	 * @param array		$data

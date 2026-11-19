@@ -76,6 +76,16 @@ class listener implements EventSubscriberInterface
 		return schema::topic_scope($this->config) && $this->db !== null && $this->query_builder !== null;
 	}
 
+	/**
+	 * Deletion rule and keep count are usable (schema marker 3, current container).
+	 *
+	 * @return bool
+	 */
+	protected function keep_count()
+	{
+		return $this->topic_scope() && schema::keep_count($this->config);
+	}
+
 	public static function getSubscribedEvents()
 	{
 		return [
@@ -103,13 +113,16 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Per-forum settings in use: the beta2 set, plus the scope once the update is complete.
+	 * Per-forum settings in use: the beta2 set, plus the scope (beta3) and the
+	 * deletion rule with its keep count (beta5) once the respective update is complete.
 	 *
 	 * @return array
 	 */
 	protected function settings()
 	{
-		return self::defaults() + ($this->topic_scope() ? ['uflagmey_pp_scope' => query_builder::SCOPE_FORUM] : []);
+		return self::defaults()
+			+ ($this->topic_scope() ? ['uflagmey_pp_scope' => query_builder::SCOPE_FORUM] : [])
+			+ ($this->keep_count() ? ['uflagmey_pp_rule' => query_builder::RULE_AGE, 'uflagmey_pp_keep_count' => 100] : []);
 	}
 
 	/**
@@ -169,7 +182,7 @@ class listener implements EventSubscriberInterface
 			return [];
 		}
 
-		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forum_settings_query($forum_id, $this->topic_scope()));
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forum_settings_query($forum_id, $this->topic_scope(), $this->keep_count()));
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
@@ -223,6 +236,28 @@ class listener implements EventSubscriberInterface
 			$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_DAYS', self::DAYS_MAX);
 		}
 
+		if (array_key_exists('uflagmey_pp_rule', $forum_data))
+		{
+			$rule = (int) $forum_data['uflagmey_pp_rule'];
+			if (!in_array($rule, [query_builder::RULE_AGE, query_builder::RULE_COUNT], true))
+			{
+				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_RULE');
+			}
+			else if ($rule === query_builder::RULE_COUNT && (int) ($forum_data['uflagmey_pp_scope'] ?? query_builder::SCOPE_FORUM) !== query_builder::SCOPE_MARKED)
+			{
+				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_RULE_SCOPE');
+			}
+		}
+
+		if (array_key_exists('uflagmey_pp_keep_count', $forum_data))
+		{
+			$x = (int) $forum_data['uflagmey_pp_keep_count'];
+			if ($x < query_builder::KEEP_COUNT_MIN || $x > query_builder::KEEP_COUNT_MAX)
+			{
+				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_KEEP_COUNT', query_builder::KEEP_COUNT_MIN, query_builder::KEEP_COUNT_MAX);
+			}
+		}
+
 		$event['errors'] = $errors;
 	}
 
@@ -242,7 +277,7 @@ class listener implements EventSubscriberInterface
 			'S_UFLAGMEY_PP_KEEP_FIRST'	=> (bool) $data['uflagmey_pp_keep_first'],
 			'S_UFLAGMEY_PP_SKIP_STICKY'	=> (bool) $data['uflagmey_pp_skip_sticky'],
 			'S_UFLAGMEY_PP_COUNT_SYNC'	=> (bool) $data['uflagmey_pp_count_sync'],
-			'S_UFLAGMEY_PP_UPDATE_PENDING'	=> !$this->topic_scope(),
+			'S_UFLAGMEY_PP_UPDATE_PENDING'	=> !$this->keep_count(),
 			'S_UFLAGMEY_PP_TOPIC_SCOPE'		=> $this->topic_scope(),
 		];
 
@@ -254,6 +289,17 @@ class listener implements EventSubscriberInterface
 				'UFLAGMEY_PP_MARKED'		=> $marked,
 				'UFLAGMEY_PP_MARKED_INACTIVE'	=> (count($marked) && (int) $data['uflagmey_pp_scope'] !== query_builder::SCOPE_MARKED)
 					? $this->language->lang('UFLAGMEY_PP_MARKED_INACTIVE', count($marked)) : '',
+			]);
+		}
+
+		if ($this->keep_count())
+		{
+			$template_data = array_merge($template_data, [
+				'S_UFLAGMEY_PP_KEEP_COUNT'		=> true,
+				'UFLAGMEY_PP_RULE'				=> (int) $data['uflagmey_pp_rule'],
+				'UFLAGMEY_PP_KEEP_COUNT'		=> (int) $data['uflagmey_pp_keep_count'],
+				'UFLAGMEY_PP_KEEP_COUNT_MIN'	=> query_builder::KEEP_COUNT_MIN,
+				'UFLAGMEY_PP_KEEP_COUNT_MAX'	=> query_builder::KEEP_COUNT_MAX,
 			]);
 		}
 

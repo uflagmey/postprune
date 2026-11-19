@@ -52,4 +52,22 @@ $lang = array_merge($lang, [
 	],
 	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: Datenbankschema passt nicht zum Cache – bitte Cache leeren</strong>',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Beitrags-Pruning</strong><br>» Forum „%1$s“: keine markierten Themen, es wurde nichts gelöscht',
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC'	=> [
+		0	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» Im %3$d markierten Thema im Forum „%1$s“ würde kein Beitrag gelöscht (neueste %4$d je Thema behalten)',
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Thema im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ würden gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPICS'	=> [
+		0	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» In den %3$d markierten Themen im Forum „%1$s“ würde kein Beitrag gelöscht (neueste %4$d je Thema behalten)',
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ würden gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPICS'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+	],
 ]);

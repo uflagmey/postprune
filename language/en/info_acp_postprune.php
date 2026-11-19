@@ -52,4 +52,22 @@ $lang = array_merge($lang, [
 	],
 	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: database schema does not match the cache – please purge the cache</strong>',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Post pruning</strong><br>» Forum “%1$s”: no marked topics, nothing deleted',
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC'	=> [
+		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPICS'	=> [
+		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic)',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPICS'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
+	],
 ]);

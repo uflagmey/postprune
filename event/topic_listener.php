@@ -139,6 +139,8 @@ class topic_listener implements EventSubscriberInterface
 	 * Notice below the topic title: in Active mode for everybody, in Dry run mode
 	 * only for administrators with a_forum. Whether the topic is affected is
 	 * decided by query_builder::topic_where(), the same rule the cron uses.
+	 * The text follows the deletion rule (age or keep count). Without schema
+	 * marker 3 the rule column is not used (query_builder::rule() is "age").
 	 *
 	 * @param \phpbb\event\data $event
 	 */
@@ -153,6 +155,12 @@ class topic_listener implements EventSubscriberInterface
 			return;
 		}
 
+		// Without schema marker 3 the rule column may exist but must not count (beta4 behaviour).
+		if (!schema::keep_count($this->config))
+		{
+			unset($topic['uflagmey_pp_rule'], $topic['uflagmey_pp_keep_count']);
+		}
+
 		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->topic_applies_query($topic, (int) $event['topic_id']));
 		$result = $this->db->sql_query($sql);
 		$applies = (bool) $this->db->sql_fetchfield('topic_id');
@@ -164,12 +172,22 @@ class topic_listener implements EventSubscriberInterface
 		}
 
 		$this->language->add_lang('common', 'uflagmey/postprune');
-		$days = (int) $topic['uflagmey_pp_days'];
 		$dryrun = ($mode === query_builder::MODE_DRYRUN);
-		$text = $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_DRYRUN' : 'UFLAGMEY_PP_NOTICE', $days);
-		if (!empty($topic['uflagmey_pp_keep_first']))
+		$keep_first = !empty($topic['uflagmey_pp_keep_first']);
+
+		if ($this->query_builder->rule($topic) === query_builder::RULE_COUNT)
 		{
-			$text .= ' ' . $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN' : 'UFLAGMEY_PP_NOTICE_KEEP_FIRST');
+			// One sentence: "only the newest X posts remain[, as well as the first post]".
+			$key = 'UFLAGMEY_PP_NOTICE_COUNT' . ($keep_first ? '_KEEP_FIRST' : '') . ($dryrun ? '_DRYRUN' : '');
+			$text = $this->language->lang($key, $this->query_builder->keep_count($topic));
+		}
+		else
+		{
+			$text = $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_DRYRUN' : 'UFLAGMEY_PP_NOTICE', (int) $topic['uflagmey_pp_days']);
+			if ($keep_first)
+			{
+				$text .= ' ' . $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN' : 'UFLAGMEY_PP_NOTICE_KEEP_FIRST');
+			}
 		}
 
 		$this->template->assign_vars([
