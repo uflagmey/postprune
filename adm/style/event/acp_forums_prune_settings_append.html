@@ -3,6 +3,21 @@
 			<legend>{{ lang('UFLAGMEY_PP_SETTINGS') }}</legend>
 			{% if S_UFLAGMEY_PP_UPDATE_PENDING %}<div class="errorbox" id="uflagmey_pp_update_pending"><p>{{ lang('UFLAGMEY_PP_UPDATE_PENDING') }}</p></div>{% endif %}
 			<p>{{ lang('UFLAGMEY_PP_SETTINGS_EXPLAIN') }}</p>
+			<p id="uflagmey_pp_save_hint"><strong>{{ lang('UFLAGMEY_PP_SAVE_HINT') }}</strong></p>
+		{% if UFLAGMEY_PP_SAVED %}
+		<dl id="uflagmey_pp_saved">
+			<dt><label>{{ UFLAGMEY_PP_SAVED_FOR ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_SAVED_EXPLAIN') }}</span></dt>
+			<dd>{{ UFLAGMEY_PP_SAVED }}</dd>
+		</dl>
+		{% endif %}
+		{% if U_UFLAGMEY_PP_PREVIEW %}
+		<dl id="uflagmey_pp_preview">
+			<dt><label>{{ lang('UFLAGMEY_PP_PREVIEW') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_PREVIEW_EXPLAIN') }}</span></dt>
+			<dd><a href="{{ U_UFLAGMEY_PP_PREVIEW }}" class="button2" id="uflagmey_pp_preview_button" data-ajax="uflagmey_pp_preview">{{ lang('UFLAGMEY_PP_PREVIEW_BUTTON') }}</a>
+				<span id="uflagmey_pp_preview_result" style="display: {% if UFLAGMEY_PP_PREVIEW_RESULT %}block{% else %}none{% endif %}; margin-top: 0.8em;"{% if not UFLAGMEY_PP_PREVIEW_RESULT %} hidden{% endif %}>{{ UFLAGMEY_PP_PREVIEW_RESULT }}</span></dd>
+		</dl>
+		{% INCLUDEJS '@uflagmey_postprune/uflagmey_pp_preview.js' %}
+		{% endif %}
 		<dl>
 			<dt><label for="uflagmey_pp_mode">{{ lang('UFLAGMEY_PP_MODE') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_MODE_EXPLAIN') }}</span></dt>
 			<dd><select id="uflagmey_pp_mode" name="uflagmey_pp_mode">
@@ -59,11 +74,3 @@
 			<dd><label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="1"{% if S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('YES') }}</label>
 				<label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="0"{% if not S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('NO') }}</label></dd>
 		</dl>
-		{% if U_UFLAGMEY_PP_PREVIEW %}
-		<dl id="uflagmey_pp_preview">
-			<dt><label>{{ lang('UFLAGMEY_PP_PREVIEW') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_PREVIEW_EXPLAIN') }}</span></dt>
-			<dd><a href="{{ U_UFLAGMEY_PP_PREVIEW }}" class="button2" id="uflagmey_pp_preview_button" data-ajax="uflagmey_pp_preview">{{ lang('UFLAGMEY_PP_PREVIEW_BUTTON') }}</a></dd>
-			<dd id="uflagmey_pp_preview_result"{% if not UFLAGMEY_PP_PREVIEW_RESULT %} hidden{% endif %}>{{ UFLAGMEY_PP_PREVIEW_RESULT }}</dd>
-		</dl>
-		{% INCLUDEJS '@uflagmey_postprune/uflagmey_pp_preview.js' %}
-		{% endif %}

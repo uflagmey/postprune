@@ -334,6 +334,16 @@ class listener implements EventSubscriberInterface
 			]);
 		}
 
+		if ($this->keep_count() && $event['action'] === 'edit' && $event['forum_id'])
+		{
+			$saved = $this->saved_line((int) $event['forum_id']);
+			if ($saved)
+			{
+				$template_data['UFLAGMEY_PP_SAVED_FOR'] = $this->language->lang('UFLAGMEY_PP_SAVED_FOR', $saved['forum_name']);
+				$template_data['UFLAGMEY_PP_SAVED'] = $saved['summary'];
+			}
+		}
+
 		if ($this->preview_available() && $event['action'] === 'edit' && $event['forum_id'])
 		{
 			$template_data = array_merge($template_data, [
@@ -419,7 +429,9 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * "Saved: … → n posts would be deleted (oldest from …, newest to be deleted from …)."
+	 * Result of the preview, shown right below the "Saved for …" line (which names the
+	 * settings): "→ n posts would be deleted (oldest: <date>, newest to be deleted: <date>)",
+	 * dates in the board/user date format with time.
 	 *
 	 * @param int $forum_id
 	 * @return string
@@ -434,18 +446,44 @@ class listener implements EventSubscriberInterface
 
 		if (!$result['post_forum'])
 		{
-			$outcome = $this->language->lang('UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM');
-		}
-		else
-		{
-			$date = $this->language->lang('UFLAGMEY_PP_PREVIEW_DATE_FORMAT');
-			$outcome = $this->language->lang('UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
-				number_format($result['num'], 0, '', $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP')),
-				$result['num'] ? $this->user->format_date($result['oldest'], $date, true) : '',
-				$result['num'] ? $this->user->format_date($result['newest'], $date, true) : '');
+			return $this->language->lang('UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM');
 		}
 
-		return $this->language->lang('UFLAGMEY_PP_PREVIEW_LINE', $this->saved_summary($result['forum'], $result['topics']), $outcome);
+		return $this->language->lang('UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
+			number_format($result['num'], 0, '', $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP')),
+			$result['num'] ? $this->user->format_date($result['oldest'], false, true) : '',
+			$result['num'] ? $this->user->format_date($result['newest'], false, true) : '');
+	}
+
+	/**
+	 * The always visible "Saved: …" line of the block: the forum's settings as
+	 * stored in the database, so a form that differs from them stands out
+	 * (e.g. redisplayed after a validation error). Reads the forum row and the
+	 * number of marked topics, no post counting.
+	 *
+	 * @param int $forum_id
+	 * @return array|null	['forum_name' => string, 'summary' => string]; null if the forum does not exist
+	 */
+	protected function saved_line($forum_id)
+	{
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forum_query($forum_id, true, true));
+		$result = $this->db->sql_query($sql);
+		$forum = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+		if (!$forum)
+		{
+			return null;
+		}
+
+		$topics = null;
+		if ($this->query_builder->scope($forum) === query_builder::SCOPE_MARKED)
+		{
+			$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $this->query_builder->marked_count_query($forum)));
+			$topics = (int) $this->db->sql_fetchfield('num_topics');
+			$this->db->sql_freeresult($result);
+		}
+
+		return ['forum_name' => $forum['forum_name'], 'summary' => $this->saved_summary($forum, $topics)];
 	}
 
 	/**

@@ -27,6 +27,9 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 	/** @var array */
 	protected $logs = [];
 
+	/** @var array format_date() arguments after the time */
+	protected $date_calls = [];
+
 	/**
 	 * Forum 3: off, marked topics only, keep the newest 2; topic 10 (marked) with 5 posts.
 	 *
@@ -60,7 +63,8 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 			return $option === 'a_forum' && $a_forum;
 		});
 		$user = $this->createMock(\phpbb\user::class);
-		$user->method('format_date')->willReturnCallback(function ($time) {
+		$user->method('format_date')->willReturnCallback(function ($time, $format = false, $forcedate = false) {
+			$this->date_calls[] = [$format, $forcedate];
 			return gmdate('Y-m-d', $time);
 		});
 		$log = $this->createMock(\phpbb\log\log_interface::class);
@@ -122,16 +126,16 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame('', $data['UFLAGMEY_PP_PREVIEW_RESULT'], 'no result before the click');
 	}
 
-	public function test_valid_request_shows_the_stored_settings_and_the_count()
+	public function test_valid_request_shows_the_count_of_the_stored_settings()
 	{
 		$data = $this->edit_form($this->listener(['uflagmey_pp_preview' => 1, 'hash' => generate_link_hash('uflagmey_pp_preview.3'), 'uflagmey_pp_keep_count' => 1]));
 
 		$day = function ($days) {
 			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
 		};
-		$this->assertSame('UFLAGMEY_PP_PREVIEW_LINE|UFLAGMEY_PP_MODE_OFF · UFLAGMEY_PP_SAVED_MARKED|1 · UFLAGMEY_PP_SAVED_KEEP_COUNT|2 · UFLAGMEY_PP_SAVED_KEEP_FIRST'
-			. '|UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3), $data['UFLAGMEY_PP_PREVIEW_RESULT'],
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3), $data['UFLAGMEY_PP_PREVIEW_RESULT'],
 			'posts 102 and 103 (keep the newest 2 besides the start post); the GET value keep_count=1 does not count');
+		$this->assertSame([[false, true], [false, true]], $this->date_calls, 'board/user date format with time, never "Today"');
 		$this->assertSame([], $this->logs, 'no log entry');
 		$this->assertCount(5, fixtures::post_ids($this->db));
 	}
@@ -176,5 +180,40 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$listener->display_form($event);
 
 		$this->assertArrayNotHasKey('U_UFLAGMEY_PP_PREVIEW', $event['template_data']);
+	}
+
+	public function test_saved_line_shows_the_database_not_the_form()
+	{
+		$listener = $this->listener([]);
+		// as after a validation error: core redisplays the posted values
+		$posted = ['forum_id' => 3, 'uflagmey_pp_mode' => 2, 'uflagmey_pp_scope' => 0, 'uflagmey_pp_rule' => 0, 'uflagmey_pp_days' => 7, 'uflagmey_pp_keep_count' => 9];
+		$event = new \phpbb\event\data(['action' => 'edit', 'forum_id' => 3, 'forum_data' => $posted, 'template_data' => []]);
+		$listener->display_form($event);
+
+		$this->assertSame('UFLAGMEY_PP_MODE_OFF · UFLAGMEY_PP_SAVED_MARKED|1 · UFLAGMEY_PP_SAVED_KEEP_COUNT|2 · UFLAGMEY_PP_SAVED_KEEP_FIRST', $event['template_data']['UFLAGMEY_PP_SAVED']);
+		$this->assertSame('UFLAGMEY_PP_SAVED_FOR|A', $event['template_data']['UFLAGMEY_PP_SAVED_FOR'], 'label with the forum name');
+		$this->assertSame(2, $event['template_data']['UFLAGMEY_PP_MODE'], 'the form itself shows the posted value');
+		$this->assertSame(9, $event['template_data']['UFLAGMEY_PP_KEEP_COUNT']);
+	}
+
+	public function test_saved_line_scope_forum_age_rule_with_all_switches()
+	{
+		$listener = $this->listener([]);
+		$this->db->sql_query('UPDATE phpbb_forums SET uflagmey_pp_mode = 1, uflagmey_pp_scope = 0, uflagmey_pp_rule = 0, uflagmey_pp_days = 1, uflagmey_pp_keep_first = 0, uflagmey_pp_skip_sticky = 0, uflagmey_pp_count_sync = 1');
+		$data = $this->edit_form($listener);
+
+		$this->assertSame('UFLAGMEY_PP_MODE_DRYRUN · UFLAGMEY_PP_SCOPE_FORUM · UFLAGMEY_PP_SAVED_DAYS|1 · UFLAGMEY_PP_SAVED_KEEP_FIRST_NO · UFLAGMEY_PP_SAVED_SKIP_STICKY_NO · UFLAGMEY_PP_SAVED_COUNT_SYNC', $data['UFLAGMEY_PP_SAVED']);
+	}
+
+	public function test_no_saved_line_for_a_new_forum_or_without_schema_marker_3()
+	{
+		$listener = $this->listener([]);
+		$event = new \phpbb\event\data(['action' => 'add', 'forum_id' => 0, 'forum_data' => [], 'template_data' => []]);
+		$listener->display_form($event);
+		$this->assertArrayNotHasKey('UFLAGMEY_PP_SAVED', $event['template_data']);
+		$this->assertArrayNotHasKey('UFLAGMEY_PP_SAVED_FOR', $event['template_data']);
+
+		$data = $this->edit_form($this->listener([], true, 2));
+		$this->assertArrayNotHasKey('UFLAGMEY_PP_SAVED', $data);
 	}
 }

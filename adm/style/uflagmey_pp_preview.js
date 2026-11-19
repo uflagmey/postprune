@@ -8,7 +8,7 @@
 
 	phpbb.addAjaxCallback('uflagmey_pp_preview', function(res) {
 		if (res && res.UFLAGMEY_PP_PREVIEW) {
-			$('#uflagmey_pp_preview_result').html(res.UFLAGMEY_PP_PREVIEW).prop('hidden', false);
+			$('#uflagmey_pp_preview_result').html(res.UFLAGMEY_PP_PREVIEW).prop('hidden', false).css('display', 'block');
 		}
 	});
 })(jQuery);

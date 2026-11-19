@@ -98,15 +98,13 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_PREVIEW'				=> 'Preview',
 	'UFLAGMEY_PP_PREVIEW_EXPLAIN'		=> 'Calculates right away what a dry run with the <strong>saved</strong> settings would delete now, in every mode, also “Off”. Nothing is deleted and nothing is logged. Unsaved changes in the form do not count.',
 	'UFLAGMEY_PP_PREVIEW_BUTTON'		=> 'Calculate dry run now',
-	'UFLAGMEY_PP_PREVIEW_LINE'			=> 'Saved: %1$s → %2$s.',
 	'UFLAGMEY_PP_PREVIEW_RESULT'		=> [
-		0	=> '<strong>no posts</strong> would be deleted',
-		1	=> '<strong>%2$s post</strong> would be deleted (from %3$s)',
-		2	=> '<strong>%2$s posts</strong> would be deleted (oldest from %3$s, newest to be deleted from %4$s)',
+		0	=> '→ No posts would be deleted.',
+		1	=> '→ <strong>%2$s post</strong> would be deleted (date: %3$s)',
+		2	=> '→ <strong>%2$s posts</strong> would be deleted (oldest: %3$s, newest to be deleted: %4$s)',
 	],
-	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> 'not a post forum, post pruning does not process it',
+	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Not a post forum, post pruning does not process it.',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'The preview could not be calculated (database error).',
-	'UFLAGMEY_PP_PREVIEW_DATE_FORMAT'	=> 'j M Y',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> ',',
 	'UFLAGMEY_PP_SAVED_MARKED'			=> 'Marked topics only (%d)',
 	'UFLAGMEY_PP_SAVED_DAYS'			=> [
@@ -122,4 +120,7 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SAVED_SKIP_STICKY'		=> 'without stickies and announcements',
 	'UFLAGMEY_PP_SAVED_SKIP_STICKY_NO'	=> 'including stickies and announcements',
 	'UFLAGMEY_PP_SAVED_COUNT_SYNC'		=> 'reduce post counts',
+	'UFLAGMEY_PP_SAVE_HINT'				=> 'Changes are only saved with “Submit” at the end of the form.',
+	'UFLAGMEY_PP_SAVED_FOR'				=> 'Saved for “%s”',
+	'UFLAGMEY_PP_SAVED_EXPLAIN'			=> 'The settings currently saved. If the fields below differ, those changes are not saved yet.',
 ]);

@@ -98,15 +98,13 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_PREVIEW'				=> 'Vorschau',
 	'UFLAGMEY_PP_PREVIEW_EXPLAIN'		=> 'Berechnet sofort, was ein Trockenlauf mit den <strong>gespeicherten</strong> Einstellungen jetzt löschen würde, in jedem Modus, auch bei „Aus“. Es wird nichts gelöscht und nichts protokolliert. Ungespeicherte Änderungen im Formular zählen nicht.',
 	'UFLAGMEY_PP_PREVIEW_BUTTON'		=> 'Trockenlauf jetzt berechnen',
-	'UFLAGMEY_PP_PREVIEW_LINE'			=> 'Gespeichert: %1$s → %2$s.',
 	'UFLAGMEY_PP_PREVIEW_RESULT'		=> [
-		0	=> 'es würden <strong>keine Beiträge</strong> gelöscht',
-		1	=> '<strong>%2$s Beitrag</strong> würde gelöscht (vom %3$s)',
-		2	=> '<strong>%2$s Beiträge</strong> würden gelöscht (ältester vom %3$s, jüngster zu löschender vom %4$s)',
+		0	=> '→ Es würden keine Beiträge gelöscht.',
+		1	=> '→ <strong>%2$s Beitrag</strong> würde gelöscht (vom %3$s)',
+		2	=> '→ <strong>%2$s Beiträge</strong> würden gelöscht (ältester vom %3$s, jüngster zu löschender vom %4$s)',
 	],
-	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> 'kein Beitragsforum, das Beitrags-Pruning bearbeitet es nicht',
+	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Kein Beitragsforum, das Beitrags-Pruning bearbeitet es nicht.',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'Die Vorschau konnte nicht berechnet werden (Datenbankfehler).',
-	'UFLAGMEY_PP_PREVIEW_DATE_FORMAT'	=> 'd.m.Y',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> '.',
 	'UFLAGMEY_PP_SAVED_MARKED'			=> 'Nur markierte Themen (%d)',
 	'UFLAGMEY_PP_SAVED_DAYS'			=> [
@@ -122,4 +120,7 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SAVED_SKIP_STICKY'		=> 'ohne wichtige Themen und Bekanntmachungen',
 	'UFLAGMEY_PP_SAVED_SKIP_STICKY_NO'	=> 'mit wichtigen Themen und Bekanntmachungen',
 	'UFLAGMEY_PP_SAVED_COUNT_SYNC'		=> 'Beitragszähler reduzieren',
+	'UFLAGMEY_PP_SAVE_HINT'				=> 'Änderungen werden erst mit „Absenden“ am Ende des Formulars gespeichert.',
+	'UFLAGMEY_PP_SAVED_FOR'				=> 'Gespeichert für „%s“',
+	'UFLAGMEY_PP_SAVED_EXPLAIN'			=> 'Der aktuell gespeicherte Stand. Weichen die Felder darunter davon ab, sind diese Änderungen noch nicht gespeichert.',
 ]);
