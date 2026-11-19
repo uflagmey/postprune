@@ -59,3 +59,11 @@
 			<dd><label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="1"{% if S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('YES') }}</label>
 				<label><input type="radio" class="radio" name="uflagmey_pp_count_sync" value="0"{% if not S_UFLAGMEY_PP_COUNT_SYNC %} id="uflagmey_pp_count_sync" checked{% endif %}> {{ lang('NO') }}</label></dd>
 		</dl>
+		{% if U_UFLAGMEY_PP_PREVIEW %}
+		<dl id="uflagmey_pp_preview">
+			<dt><label>{{ lang('UFLAGMEY_PP_PREVIEW') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_PREVIEW_EXPLAIN') }}</span></dt>
+			<dd><a href="{{ U_UFLAGMEY_PP_PREVIEW }}" class="button2" id="uflagmey_pp_preview_button" data-ajax="uflagmey_pp_preview">{{ lang('UFLAGMEY_PP_PREVIEW_BUTTON') }}</a></dd>
+			<dd id="uflagmey_pp_preview_result"{% if not UFLAGMEY_PP_PREVIEW_RESULT %} hidden{% endif %}>{{ UFLAGMEY_PP_PREVIEW_RESULT }}</dd>
+		</dl>
+		{% INCLUDEJS '@uflagmey_postprune/uflagmey_pp_preview.js' %}
+		{% endif %}

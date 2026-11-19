@@ -101,6 +101,23 @@ class query_builder
 	}
 
 	/**
+	 * One forum with its stored settings, whatever its mode (ACP preview).
+	 *
+	 * @param int	$forum_id
+	 * @param bool	$topic_scope	Include the scope column (schema::topic_scope())
+	 * @param bool	$keep_count		Include the rule and keep count columns (schema::keep_count())
+	 * @return array
+	 */
+	public function forum_query($forum_id, $topic_scope = false, $keep_count = false)
+	{
+		return [
+			'SELECT'	=> 'f.forum_id, f.forum_name, f.forum_type, ' . $this->settings_columns($topic_scope, $keep_count),
+			'FROM'		=> [$this->forums_table => 'f'],
+			'WHERE'		=> 'f.forum_id = ' . (int) $forum_id,
+		];
+	}
+
+	/**
 	 * Per-forum setting columns available in the given schema state.
 	 *
 	 * @param bool $topic_scope
@@ -181,7 +198,8 @@ class query_builder
 	}
 
 	/**
-	 * Number of candidate posts of one forum (used by the dry run).
+	 * Number of candidate posts of one forum with the post_time of the oldest
+	 * and the newest one (dry run and ACP preview, same query).
 	 *
 	 * @param array	$forum	Row from forums_query()
 	 * @param int	$now
@@ -191,7 +209,7 @@ class query_builder
 	public function count_query(array $forum, $now, array $bounds = [])
 	{
 		return [
-			'SELECT'	=> 'COUNT(p.post_id) AS num_posts',
+			'SELECT'	=> 'COUNT(p.post_id) AS num_posts, MIN(p.post_time) AS oldest, MAX(p.post_time) AS newest',
 			'FROM'		=> [$this->posts_table => 'p', $this->topics_table => 't'],
 			'WHERE'		=> $this->candidates_where($forum, $now, $bounds),
 		];

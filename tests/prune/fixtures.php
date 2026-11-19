@@ -136,4 +136,28 @@ namespace
 
 		return $db->sql_affectedrows();
 	}
+
+	/**
+	 * Test doubles for core functions the ACP preview uses (includes/functions.php, functions_acp.php).
+	 * The link hash depends on the name only, like core's per-user hash for one user.
+	 */
+	function generate_link_hash($link_name)
+	{
+		return substr(sha1('test-salt' . $link_name), 0, 8);
+	}
+
+	function check_link_hash($token, $link_name)
+	{
+		return $token === generate_link_hash($link_name);
+	}
+
+	function append_sid($url, $params = false)
+	{
+		return $url . ($params ? '?' . (is_array($params) ? http_build_query($params, '', '&amp;') : $params) : '');
+	}
+
+	function adm_back_link($u_action)
+	{
+		return '';
+	}
 }

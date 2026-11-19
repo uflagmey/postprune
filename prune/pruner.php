@@ -179,33 +179,20 @@ class pruner
 					continue;
 				}
 
-				$topics = $this->marked_topics($forum);
-				if ($topics === false)
-				{
-					return $this->schema_mismatch($pruned, $dryrun);
-				}
-				if ($topics === 0)
-				{
-					$dryrun[(int) $forum['forum_id']] = 0;
-					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', [$forum['forum_name']]);
-					continue;
-				}
-
-				$bounds = $this->bounds($forum);
-				if ($bounds === false)
-				{
-					return $this->schema_mismatch($pruned, $dryrun);
-				}
-
-				$count = ($bounds === null || $bounds) ? $this->select($this->query_builder->count_query($forum, $now, (array) $bounds)) : [['num_posts' => 0]];
+				$count = $this->count($forum, $now);
 				if ($count === false)
 				{
 					return $this->schema_mismatch($pruned, $dryrun);
 				}
-				$num = (int) $count[0]['num_posts'];
 
-				$dryrun[(int) $forum['forum_id']] = $num;
-				$this->log_result('LOG_UFLAGMEY_PP_DRYRUN', $forum, $num, $topics);
+				$dryrun[(int) $forum['forum_id']] = $count['num'];
+				if ($count['topics'] === 0)
+				{
+					$this->add_log('LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', [$forum['forum_name']]);
+					continue;
+				}
+
+				$this->log_result('LOG_UFLAGMEY_PP_DRYRUN', $forum, $count['num'], $count['topics']);
 			}
 		}
 
@@ -214,6 +201,84 @@ class pruner
 			'pruned'	=> $pruned,
 			'dryrun'	=> $dryrun,
 		];
+	}
+
+	/**
+	 * ACP preview ("calculate dry run now"): what a dry run of this forum would
+	 * count right now, from the STORED settings, whatever the mode. Read only:
+	 * no deletion, no log entry, no last_run, no cron lock. Same counting as the
+	 * dry run of run() (count()), without batch limit.
+	 *
+	 * @param int	$forum_id
+	 * @param int	$now
+	 * @return array|null|false	['forum' => settings row, 'post_forum' => bool, 'topics' => int|null,
+	 *							'num' => int, 'oldest' => int, 'newest' => int]; null: no such forum; false: a query failed
+	 */
+	public function preview($forum_id, $now)
+	{
+		$rows = $this->select($this->query_builder->forum_query($forum_id, schema::topic_scope($this->config), schema::keep_count($this->config)));
+		if ($rows === false || !$rows)
+		{
+			return $rows === false ? false : null;
+		}
+
+		$forum = $rows[0];
+		$post_forum = ((int) $forum['forum_type'] === FORUM_POST);
+		$count = $post_forum ? $this->count($forum, $now) : ['topics' => $this->marked_topics($forum), 'num' => 0, 'oldest' => 0, 'newest' => 0];
+		if ($count === false || $count['topics'] === false)
+		{
+			return false;
+		}
+
+		return ['forum' => $forum, 'post_forum' => $post_forum] + $count;
+	}
+
+	/**
+	 * Counts the candidates of one forum (dry run and ACP preview).
+	 *
+	 * @param array	$forum	Row from forums_query() or query_builder::forum_query()
+	 * @param int	$now
+	 * @return array|false	['topics' => int|null (see marked_topics()), 'num' => int, 'oldest' => int, 'newest' => int];
+	 *						false: a query failed
+	 */
+	protected function count(array $forum, $now)
+	{
+		$topics = $this->marked_topics($forum);
+		if ($topics === false)
+		{
+			return false;
+		}
+
+		$count = ['topics' => $topics, 'num' => 0, 'oldest' => 0, 'newest' => 0];
+		if ($topics === 0)
+		{
+			return $count;
+		}
+
+		$bounds = $this->bounds($forum);
+		if ($bounds === false)
+		{
+			return false;
+		}
+		if ($bounds !== null && !$bounds)
+		{
+			return $count;
+		}
+
+		$rows = $this->select($this->query_builder->count_query($forum, $now, (array) $bounds));
+		if ($rows === false)
+		{
+			return false;
+		}
+
+		$count['num'] = (int) $rows[0]['num_posts'];
+		if ($count['num'])
+		{
+			$count['oldest'] = (int) $rows[0]['oldest'];
+			$count['newest'] = (int) $rows[0]['newest'];
+		}
+
+		return $count;
 	}
 
 	/**

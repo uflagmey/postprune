@@ -11,6 +11,7 @@
 namespace uflagmey\postprune\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use uflagmey\postprune\prune\pruner;
 use uflagmey\postprune\prune\query_builder;
 use uflagmey\postprune\prune\schema;
 
@@ -43,6 +44,21 @@ class listener implements EventSubscriberInterface
 	/** @var string */
 	protected $php_ext;
 
+	/** @var \phpbb\auth\auth|null */
+	protected $auth;
+
+	/** @var \phpbb\user|null */
+	protected $user;
+
+	/** @var pruner|null */
+	protected $pruner;
+
+	/** @var string */
+	protected $adm_path;
+
+	/** @var string Preview result for the form (request without JavaScript) */
+	protected $preview = '';
+
 	/**
 	 * New arguments are optional and appended: after an upload over an active
 	 * older version, phpBB may still run the old container with the old arguments.
@@ -54,8 +70,12 @@ class listener implements EventSubscriberInterface
 	 * @param query_builder|null						$query_builder
 	 * @param string									$root_path
 	 * @param string									$php_ext
+	 * @param \phpbb\auth\auth|null						$auth
+	 * @param \phpbb\user|null							$user
+	 * @param pruner|null								$pruner
+	 * @param string									$adm_path	phpBB's admin directory relative to $root_path
 	 */
-	public function __construct(\phpbb\language\language $language, \phpbb\request\request_interface $request, ?\phpbb\config\config $config = null, ?\phpbb\db\driver\driver_interface $db = null, ?query_builder $query_builder = null, $root_path = '', $php_ext = 'php')
+	public function __construct(\phpbb\language\language $language, \phpbb\request\request_interface $request, ?\phpbb\config\config $config = null, ?\phpbb\db\driver\driver_interface $db = null, ?query_builder $query_builder = null, $root_path = '', $php_ext = 'php', ?\phpbb\auth\auth $auth = null, ?\phpbb\user $user = null, ?pruner $pruner = null, $adm_path = 'adm/')
 	{
 		$this->language = $language;
 		$this->request = $request;
@@ -64,6 +84,10 @@ class listener implements EventSubscriberInterface
 		$this->query_builder = $query_builder;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
+		$this->auth = $auth;
+		$this->user = $user;
+		$this->pruner = $pruner;
+		$this->adm_path = $adm_path;
 	}
 
 	/**
@@ -84,6 +108,17 @@ class listener implements EventSubscriberInterface
 	protected function keep_count()
 	{
 		return $this->topic_scope() && schema::keep_count($this->config);
+	}
+
+	/**
+	 * The ACP preview is usable: complete update (schema marker 3) and a
+	 * container that has all its services.
+	 *
+	 * @return bool
+	 */
+	protected function preview_available()
+	{
+		return $this->keep_count() && $this->auth !== null && $this->user !== null && $this->pruner !== null;
 	}
 
 	public static function getSubscribedEvents()
@@ -191,7 +226,9 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * A new forum starts with the defaults.
+	 * A new forum starts with the defaults. A preview request (link in the
+	 * block, GET with link hash, never the forum form) is answered here: as
+	 * JSON for the AJAX link, otherwise the result is shown in the form.
 	 *
 	 * @param \phpbb\event\data $event
 	 */
@@ -200,6 +237,11 @@ class listener implements EventSubscriberInterface
 		if ($event['update'])
 		{
 			return;
+		}
+
+		if ($event['action'] === 'edit' && $this->request->is_set('uflagmey_pp_preview', \phpbb\request\request_interface::GET))
+		{
+			$this->preview_request((int) $event['forum_id']);
 		}
 
 		$event['forum_data'] = array_merge($this->settings(), $event['forum_data']);
@@ -292,6 +334,14 @@ class listener implements EventSubscriberInterface
 			]);
 		}
 
+		if ($this->preview_available() && $event['action'] === 'edit' && $event['forum_id'])
+		{
+			$template_data = array_merge($template_data, [
+				'U_UFLAGMEY_PP_PREVIEW'			=> $this->preview_url((int) $event['forum_id']),
+				'UFLAGMEY_PP_PREVIEW_RESULT'	=> $this->preview,
+			]);
+		}
+
 		if ($this->keep_count())
 		{
 			$template_data = array_merge($template_data, [
@@ -304,6 +354,136 @@ class listener implements EventSubscriberInterface
 		}
 
 		$event['template_data'] = array_merge($event['template_data'], $template_data);
+	}
+
+	/**
+	 * @param int $forum_id
+	 * @return string
+	 */
+	protected function preview_hash_name($forum_id)
+	{
+		return 'uflagmey_pp_preview.' . (int) $forum_id;
+	}
+
+	/**
+	 * Link of the preview button: its own GET action of acp_forums with a link hash.
+	 *
+	 * @param int $forum_id
+	 * @return string
+	 */
+	protected function preview_url($forum_id)
+	{
+		return append_sid($this->root_path . $this->adm_path . 'index.' . $this->php_ext, [
+			'i'						=> 'acp_forums',
+			'mode'					=> 'manage',
+			'action'				=> 'edit',
+			'f'						=> (int) $forum_id,
+			'uflagmey_pp_preview'	=> 1,
+			'hash'					=> generate_link_hash($this->preview_hash_name($forum_id)),
+		]);
+	}
+
+	/**
+	 * Answers a preview request. Only for a_forum (acp_forums checks that already)
+	 * with a valid link hash for this forum; anything else is rejected.
+	 *
+	 * @param int $forum_id
+	 */
+	protected function preview_request($forum_id)
+	{
+		$this->language->add_lang('common', 'uflagmey/postprune');
+
+		$valid = $this->preview_available()
+			&& $this->auth->acl_get('a_forum')
+			&& check_link_hash($this->request->variable('hash', ''), $this->preview_hash_name($forum_id));
+
+		if ($this->request->is_ajax())
+		{
+			$json = new \phpbb\json_response();
+			$json->send($valid ? [
+				'success'				=> true,
+				'UFLAGMEY_PP_PREVIEW'	=> $this->preview_text($forum_id),
+			] : [
+				'success'		=> false,
+				'MESSAGE_TITLE'	=> $this->language->lang('ERROR'),
+				'MESSAGE_TEXT'	=> $this->language->lang('FORM_INVALID'),
+			]);
+		}
+
+		if (!$valid)
+		{
+			trigger_error($this->language->lang('FORM_INVALID') . adm_back_link(append_sid($this->root_path . $this->adm_path . 'index.' . $this->php_ext, 'i=acp_forums&amp;mode=manage&amp;action=edit&amp;f=' . (int) $forum_id)), E_USER_WARNING);
+		}
+
+		$this->preview = $this->preview_text($forum_id);
+	}
+
+	/**
+	 * "Saved: … → n posts would be deleted (oldest from …, newest to be deleted from …)."
+	 *
+	 * @param int $forum_id
+	 * @return string
+	 */
+	protected function preview_text($forum_id)
+	{
+		$result = $this->pruner->preview($forum_id, time());
+		if (!$result)
+		{
+			return $this->language->lang($result === null ? 'NO_FORUM' : 'UFLAGMEY_PP_PREVIEW_FAILED');
+		}
+
+		if (!$result['post_forum'])
+		{
+			$outcome = $this->language->lang('UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM');
+		}
+		else
+		{
+			$date = $this->language->lang('UFLAGMEY_PP_PREVIEW_DATE_FORMAT');
+			$outcome = $this->language->lang('UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
+				number_format($result['num'], 0, '', $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP')),
+				$result['num'] ? $this->user->format_date($result['oldest'], $date, true) : '',
+				$result['num'] ? $this->user->format_date($result['newest'], $date, true) : '');
+		}
+
+		return $this->language->lang('UFLAGMEY_PP_PREVIEW_LINE', $this->saved_summary($result['forum'], $result['topics']), $outcome);
+	}
+
+	/**
+	 * Stored settings in words: "Dry run · Marked topics only (3) · 90 days · Keep first post".
+	 *
+	 * @param array		$forum	Row from query_builder::forum_query()
+	 * @param int|null	$topics	Number of marked topics, null for scope "whole forum"
+	 * @return string
+	 */
+	protected function saved_summary(array $forum, $topics)
+	{
+		$modes = [query_builder::MODE_OFF => 'UFLAGMEY_PP_MODE_OFF', query_builder::MODE_DRYRUN => 'UFLAGMEY_PP_MODE_DRYRUN', query_builder::MODE_ACTIVE => 'UFLAGMEY_PP_MODE_ACTIVE'];
+		$mode = (int) $forum['uflagmey_pp_mode'];
+		$parts = [$this->language->lang(isset($modes[$mode]) ? $modes[$mode] : 'UFLAGMEY_PP_MODE_OFF')];
+
+		$marked = ($this->query_builder->scope($forum) === query_builder::SCOPE_MARKED);
+		$parts[] = $marked ? $this->language->lang('UFLAGMEY_PP_SAVED_MARKED', (int) $topics) : $this->language->lang('UFLAGMEY_PP_SCOPE_FORUM');
+
+		if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
+		{
+			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_KEEP_COUNT', $this->query_builder->keep_count($forum));
+		}
+		else
+		{
+			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_DAYS', max(1, (int) $forum['uflagmey_pp_days']));
+		}
+
+		$parts[] = $this->language->lang(empty($forum['uflagmey_pp_keep_first']) ? 'UFLAGMEY_PP_SAVED_KEEP_FIRST_NO' : 'UFLAGMEY_PP_SAVED_KEEP_FIRST');
+		if (!$marked)
+		{
+			$parts[] = $this->language->lang(empty($forum['uflagmey_pp_skip_sticky']) ? 'UFLAGMEY_PP_SAVED_SKIP_STICKY_NO' : 'UFLAGMEY_PP_SAVED_SKIP_STICKY');
+		}
+		if (!empty($forum['uflagmey_pp_count_sync']))
+		{
+			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_COUNT_SYNC');
+		}
+
+		return implode(' · ', $parts);
 	}
 
 	/**
