@@ -246,4 +246,21 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->assertStringNotContainsString('uflagmey_pp_rule', $qb->forums_query(true, false)['SELECT']);
 		$this->assertStringContainsString('uflagmey_pp_rule', $qb->forums_query(true, true)['SELECT']);
 	}
+
+	public function test_status_mix_fewer_than_x_approved_loses_nothing_exactly_x_loses_only_older_non_approved()
+	{
+		$this->forum(10, 1);
+		// topic 10: start + 18 replies, every 2nd reply unapproved/soft-deleted: 9 approved replies < X
+		$this->topic(10, 19, function ($i) {
+			return ($i === 1 || $i % 2 === 1) ? ITEM_APPROVED : ($i % 4 === 0 ? ITEM_UNAPPROVED : ITEM_DELETED);
+		});
+		// topic 11: start + 6 older unapproved/soft-deleted replies + exactly X = 10 approved replies
+		$this->topic(11, 17, function ($i) {
+			return ($i >= 2 && $i <= 7) ? ($i % 2 === 0 ? ITEM_UNAPPROVED : ITEM_DELETED) : ITEM_APPROVED;
+		});
+		$this->cycle();
+
+		$this->assertSame(range(10001, 10019), $this->ids(10), 'fewer than X approved: nothing goes, not even unapproved or soft-deleted posts');
+		$this->assertSame(array_merge([11001], range(11008, 11017)), $this->ids(11), 'exactly X approved: all kept, the older non-approved posts go');
+	}
 }
