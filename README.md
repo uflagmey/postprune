@@ -67,7 +67,7 @@ Nach dem Zurückspielen eines Datenbank-Backups immer den Cache leeren (ACP → 
 7. **Zusammenführen in ein markiertes Thema:** Die übernommenen Beiträge gehören danach zum markierten Thema und werden künftig mitgekürzt. Sie behalten ihr ursprüngliches Datum: Sind sie schon alt genug, werden sie beim nächsten Lauf gelöscht.
 8. **Menüeintrag „Automatisch kürzen“ fehlt?** Er erscheint nur für Administratoren mit dem Recht *Kann Foren verwalten* (`a_forum`) und nur, wenn das Update abgeschlossen ist (siehe „Update von einer früheren Version“).
 9. **Datenbank-Backup zurückgespielt?** Nach dem Zurückspielen eines Datenbank-Backups **immer den Cache leeren** (ACP → Allgemein → „Cache leeren“), und zwar bevor die Erweiterung deaktiviert und wieder aktiviert wird. Sonst arbeitet phpBB noch mit den zwischengespeicherten Werten aus der Zeit vor dem Zurückspielen: Stammt das Backup aus der Zeit vor dem Update, gilt bis zum Cache-Leeren: Die Seiten des Boards und die übrigen geplanten Aufgaben von phpBB laufen normal weiter, Post Prune löscht aber nichts und schreibt einmal pro Zyklus „Post Prune: Datenbankschema passt nicht zum Cache – bitte Cache leeren“ ins Fehler-Protokoll (ACP → Wartung). Das Markieren von Themen kann mit einem Fehler 403 enden. Nach dem Cache-Leeren löscht Post Prune ab dem nächsten Zyklus wieder (Standard: einen Tag nach dem Eintrag im Fehler-Protokoll). Abhilfe, falls es schon passiert ist: Cache leeren, Erweiterung deaktivieren und wieder aktivieren (**nicht** „Arbeitsdaten löschen“). Einstellungen und Markierungen bleiben dabei erhalten.
-10. **Gespeichert wird erst mit „Absenden“** ganz unten im Forum-Formular. Wer im Block etwas ändert und die Seite verlässt, hat nichts gespeichert. Die Zeile **„Gespeichert für „<Forum>“: …“** oben im Block zeigt immer den Stand aus der Datenbank, z. B. „Trockenlauf · Nur markierte Themen (1) · 30 Tage · ersten Beitrag behalten“. Weichen die Felder darunter davon ab, sind diese Änderungen noch nicht gespeichert (das passiert z. B., wenn phpBB das Formular nach einem Fehler erneut anzeigt).
+10. **Gespeichert wird erst mit „Absenden“** ganz unten im Forum-Formular. Wer im Block etwas ändert und die Seite verlässt, hat nichts gespeichert. Die Zeile **„Gespeichert für „<Forum>“: …“** oben im Block zeigt immer den Stand aus der Datenbank, z. B. „Trockenlauf · Nur markierte Themen (1) · 30 Tage · ersten Beitrag behalten“. Weichen die Felder darunter davon ab, sind diese Änderungen noch nicht gespeichert (das passiert z. B., wenn phpBB das Formular nach einem Fehler erneut anzeigt). Werte lassen sich vorher mit „Trockenlauf jetzt berechnen“ ausprobieren (z. B. 100 oder 50 behalten); das Ergebnis ist dann als „noch nicht gespeichert“ markiert. Zum Schluss einmal „Absenden“.
 11. **⚠ System-Cron nur mit Cronjob für alle Aufgaben.** Die Option „Wiederkehrende Aufgaben über Cron-Job des Betriebssystems ausführen“ (ACP → Allgemein → Server-Konfiguration → Server und Domain) **nicht** einschalten, solange auf dem Server kein Cronjob läuft, der **alle** Aufgaben (`php bin/phpbbcli.php cron:run`, **ohne** Task-Namen) alle paar Minuten ausführt. Ist die Option an, startet phpBB **keine** Aufgabe mehr über Seitenaufrufe. Ein Cronjob nur für Post Prune (`cron:run uflagmey.postprune.cron.task.prune`) legt dann den Rest des Boards lahm: E-Mail-Versand, Benachrichtigungen, Aufräumarbeiten usw. laufen nicht mehr.
 
 ### Einstellungen pro Forum
@@ -110,20 +110,21 @@ Markierung entfernen: an derselben Stelle „Automatisch kürzen: ausschalten“
 Statt nach Alter lässt sich ein Sammelthema auch auf eine feste Länge begrenzen. Beispiel: In der Witze-Sammlung sollen immer nur die **neuesten 100 Beiträge** stehen bleiben, egal wie alt sie sind, dazu der Startbeitrag.
 
 1. **Backup**, Thema markieren wie oben (Schritte 1 und 2).
-2. **Forum einstellen:** Geltungsbereich **Nur markierte Themen**, Löschregel **Nach Anzahl**, Anzahl behalten **100**, Ersten Beitrag eines Themas behalten **Ja**, Modus **Trockenlauf**, „Absenden“. Die Zeile oben im Block zeigt danach „Gespeichert für „Plauderecke“: Trockenlauf · Nur markierte Themen (1) · neueste 100 je Thema behalten · ersten Beitrag behalten“.
-3. **Sofort prüfen:** „Trockenlauf jetzt berechnen“ zeigt z. B. „→ 340 Beiträge würden gelöscht (ältester vom …, jüngster zu löschender vom …)“. Nach dem nächsten Cron-Lauf steht dieselbe Zahl im Administrations-Protokoll („… (neueste 100 je Thema behalten)“).
+2. **Forum einstellen:** Geltungsbereich **Nur markierte Themen**, Löschregel **Nach Anzahl**, Anzahl behalten **100**, Ersten Beitrag eines Themas behalten **Ja**, Modus **Trockenlauf**.
+3. **Sofort prüfen, schon vor dem Speichern:** „Trockenlauf jetzt berechnen“ zeigt z. B. „→ 340 Beiträge würden gelöscht (ältester vom …, jüngster zu löschender vom …) – mit den Werten im Formular, noch nicht gespeichert“. Andere Werte (z. B. 50) lassen sich so direkt vergleichen. Dann „Absenden“. Die Zeile oben im Block zeigt danach „Gespeichert für „Plauderecke“: Trockenlauf · Nur markierte Themen (1) · neueste 100 je Thema behalten · ersten Beitrag behalten“. Nach dem nächsten Cron-Lauf steht dieselbe Zahl im Administrations-Protokoll („… (neueste 100 je Thema behalten)“).
 4. **Aktiv schalten.** Besucher sehen im Thema „In diesem Thema bleiben nur die neuesten 100 Beiträge erhalten, sowie der erste Beitrag.“
 
 Gezählt werden nur **freigegebene** Beiträge (ohne Startbeitrag). Ein Thema mit **weniger als 100** freigegebenen Beiträgen verliert nichts, auch keine ungeprüften oder soft-gelöschten. Ab **genau 100** gilt die Grenze: Die freigegebenen bleiben alle, ungeprüfte und soft-gelöschte Beiträge, die älter als der älteste davon sind, werden gelöscht. Neue Beiträge verschieben die Grenze: Nach 5 neuen Antworten werden beim nächsten Lauf die 5 ältesten gelöscht. Ein großer Rückstand wird in Portionen abgebaut (höchstens 200 Beiträge pro Lauf, siehe unten).
 
 ### Vorschau / manuell auslösen
 
-**Schaltfläche „Trockenlauf jetzt berechnen“** im Block (ACP → Foren → beim Forum auf „Ändern“ klicken): Sie zeigt sofort, was ein Trockenlauf mit den **gespeicherten** Einstellungen jetzt löschen würde, z. B. „→ 3.541 Beiträge würden gelöscht (ältester vom 02.03.2019 14:05, jüngster zu löschender vom 15.08.2026 09:12)“. Sie funktioniert in jedem Modus, auch bei „Aus“, also schon vor dem Einschalten.
+**Schaltfläche „Trockenlauf jetzt berechnen“** im Block (ACP → Foren → beim Forum auf „Ändern“ klicken): Sie zeigt sofort, was ein Trockenlauf jetzt löschen würde, mit den **Werten im Formular**, auch wenn sie noch nicht gespeichert sind, z. B. „→ 3.541 Beiträge würden gelöscht (ältester vom 02.03.2019 14:05, jüngster zu löschender vom 15.08.2026 09:12)“. Sie funktioniert in jedem Modus, auch bei „Aus“, also schon vor dem Einschalten.
 
 - Es wird **nichts gelöscht** und nichts protokolliert; der Cron-Zeitplan bleibt unberührt.
 - Gezählt wird mit derselben Regel wie Cron, Trockenlauf und Hinweis im Thema, ohne Limit pro Lauf. Die Zahl entspricht dem Eintrag „Trockenlauf …“ im Protokoll beim nächsten Cron-Lauf, sofern sich bis dahin nichts ändert.
-- **Ungespeicherte Änderungen zählen nicht.** Erst „Absenden“, dann die Vorschau. Die Zeile „Gespeichert für …“ direkt darüber zeigt, welche Werte gerechnet werden.
-- **Ohne JavaScript** lädt die Schaltfläche die Seite neu; das Ergebnis steht danach unter der Schaltfläche. Ungespeicherte Änderungen im Formular gehen dabei verloren.
+- **Werte ausprobieren:** Weichen die Felder vom gespeicherten Stand ab (Zeile „Gespeichert für …“ darüber), steht hinter dem Ergebnis **„– mit den Werten im Formular, noch nicht gespeichert“** und darunter „Gelöscht wird nur mit gespeicherten Werten. Erst ‚Absenden‘ übernimmt sie.“ Der Cron löscht nur mit gespeicherten Werten. Modus und „Beitragszähler reduzieren“ ändern die Zahl nicht; die markierten Themen kommen immer aus der Datenbank.
+- **Ungültige Werte** (z. B. „Nach Anzahl“ mit „Ganzes Forum“, leeres Feld, Anzahl 0) ergeben keine Zahl, sondern dieselbe Fehlermeldung wie beim Speichern.
+- **Ohne JavaScript** lädt die Schaltfläche die Seite neu und rechnet mit dem **gespeicherten** Stand; das Ergebnis steht danach unter der Schaltfläche. Ungespeicherte Änderungen im Formular gehen dabei verloren.
 - Nur für Administratoren mit *Kann Foren verwalten* (`a_forum`), und erst wenn das Update abgeschlossen ist.
 
 **Für Fortgeschrittene:**
@@ -134,7 +135,7 @@ Gezählt werden nur **freigegebene** Beiträge (ohne Startbeitrag). Ein Thema mi
 ### Empfohlenes Vorgehen
 
 1. **Erst ein Backup** von Datenbank und `files/`.
-2. **Dann Trockenlauf**: Einstellungen speichern, mit „Trockenlauf jetzt berechnen“ sofort die Zahl prüfen, Modus auf „Trockenlauf“ stellen und abwarten. Im **Administrations-Protokoll** steht danach „Trockenlauf: Beitrags-Pruning – N Beiträge im Forum „…“ würden gelöscht“. Es wird nichts gelöscht.
+2. **Dann Trockenlauf**: Werte im Formular mit „Trockenlauf jetzt berechnen“ ausprobieren, bis die Zahl passt, Modus auf „Trockenlauf“ stellen, einmal „Absenden“ und abwarten. Im **Administrations-Protokoll** steht danach „Trockenlauf: Beitrags-Pruning – N Beiträge im Forum „…“ würden gelöscht“. Es wird nichts gelöscht.
 3. **Dann Aktiv**, wenn die Zahl plausibel ist. Jede Löschung wird im Administrations-Protokoll vermerkt („Beitrags-Pruning – N Beiträge im Forum „…“ gelöscht“).
 
 ### Wann läuft das Pruning?
@@ -149,7 +150,7 @@ Gezählt werden nur **freigegebene** Beiträge (ohne Startbeitrag). Ein Thema mi
 
 Gelöscht wird ausschließlich über die phpBB-Kernfunktion `delete_posts()` (`includes/functions_admin.php`). Sie entfernt Anhänge samt Dateien, Suchindex, Meldungen und Benachrichtigungen und synchronisiert Themen und Foren. Die Extension enthält keine eigenen DELETE-Statements.
 
-Ob ein Thema dem Pruning unterliegt, entscheidet eine einzige Regel (`query_builder::topic_where()`). Cron, Trockenlauf, Vorschau und der Hinweis im Thema nutzen sie gemeinsam, deshalb zeigt der Hinweis genau die Themen, die der Cron kürzt, und die Vorschau dieselbe Zahl wie der Trockenlauf.
+Ob ein Thema dem Pruning unterliegt, entscheidet eine einzige Regel (`query_builder::topic_where()`). Cron, Trockenlauf, Vorschau und der Hinweis im Thema nutzen sie gemeinsam, deshalb zeigt der Hinweis genau die Themen, die der Cron kürzt, und die Vorschau dieselbe Zahl wie der Trockenlauf. Die Prüfung der Einstellungen (Bereiche, erlaubte Werte, „Nach Anzahl“ nur mit markierten Themen) steht ebenfalls nur an einer Stelle (`prune\settings::errors()`) und gilt für Speichern und Vorschau.
 
 Die Löschregel „Nach Anzahl“ kommt ohne Window-Funktionen aus: Je Thema wird der X-te neueste freigegebene Beitrag als Grenze gelesen, gelöscht wird alles davor (nach Zeit, bei gleicher Zeit nach Beitrags-ID).
 
@@ -218,7 +219,7 @@ After restoring a database backup always purge the cache (ACP → General → �
 7. **Merging into a marked topic:** the merged posts then belong to the marked topic and are pruned from then on. They keep their original date: if they are already old enough, they are deleted on the next run.
 8. **Menu entry “Prune automatically” missing?** It is only shown to administrators with the permission *Can manage forums* (`a_forum`), and only once the update is complete (see “Updating from an earlier version”).
 9. **Restored a database backup?** After restoring a database backup **always purge the cache** (ACP → General → “Purge the cache”), before disabling and enabling the extension. Otherwise phpBB keeps working with the cached values from before the restore: if the backup is from before the update, the following applies until the cache is purged: the board's pages and phpBB's other scheduled tasks keep working normally, but Post Prune deletes nothing and writes “Post Prune: database schema does not match the cache – please purge the cache” to the error log (ACP → Maintenance) once per cycle. Marking topics can end with an error 403. After the cache is purged, Post Prune deletes again from the next cycle on (default: one day after the error log entry). Remedy if it has already happened: purge the cache, disable and enable the extension (**not** “Delete data”). Settings and marks are kept.
-10. **Nothing is saved until “Submit”** at the very end of the forum form. Changing values in the block and leaving the page saves nothing. The line **“Saved for “<forum>”: …”** at the top of the block always shows the state in the database, e.g. “Dry run · Marked topics only (1) · 30 days · keep first post”. If the fields below differ, those changes are not saved yet (this happens e.g. when phpBB shows the form again after an error).
+10. **Nothing is saved until “Submit”** at the very end of the forum form. Changing values in the block and leaving the page saves nothing. The line **“Saved for “<forum>”: …”** at the top of the block always shows the state in the database, e.g. “Dry run · Marked topics only (1) · 30 days · keep first post”. If the fields below differ, those changes are not saved yet (this happens e.g. when phpBB shows the form again after an error). Values can be tried out first with “Calculate dry run now” (e.g. keep 100 or 50); the result is then marked “not saved yet”. Finally click “Submit” once.
 11. **⚠ System cron only with a cron job for all tasks.** Do **not** enable “Run periodic tasks from operating system cron” (ACP → General → Server configuration → Server settings) unless a cron job on the server runs **all** tasks (`php bin/phpbbcli.php cron:run`, **without** a task name) every few minutes. With that option on, phpBB no longer starts **any** task on page requests. A cron job for Post Prune only (`cron:run uflagmey.postprune.cron.task.prune`) then brings the rest of the board to a halt: e-mails, notifications, clean-up tasks etc. stop running.
 
 ### Settings per forum
@@ -261,20 +262,21 @@ Removing the mark: same place, “Prune automatically: switch off”. If no topi
 Instead of by age, a collection topic can also be kept at a fixed length. Example: the Joke collection should always keep only its **newest 100 posts**, however old they are, plus the first post.
 
 1. **Backup**, mark the topic as above (steps 1 and 2).
-2. **Set up the forum:** scope **Marked topics only**, deletion rule **By number**, number to keep **100**, keep first post of each topic **Yes**, mode **Dry run**, “Submit”. The line at the top of the block then shows “Saved for “Chit-chat”: Dry run · Marked topics only (1) · keep the newest 100 per topic · keep first post”.
-3. **Check right away:** “Calculate dry run now” shows e.g. “→ 340 posts would be deleted (oldest: …, newest to be deleted: …)”. After the next cron run the admin log shows the same number (“… (keeping the newest 100 per topic)”).
+2. **Set up the forum:** scope **Marked topics only**, deletion rule **By number**, number to keep **100**, keep first post of each topic **Yes**, mode **Dry run**.
+3. **Check right away, even before saving:** “Calculate dry run now” shows e.g. “→ 340 posts would be deleted (oldest: …, newest to be deleted: …) – with the values in the form, not saved yet”. Other values (e.g. 50) can be compared directly this way. Then “Submit”. The line at the top of the block then shows “Saved for “Chit-chat”: Dry run · Marked topics only (1) · keep the newest 100 per topic · keep first post”. After the next cron run the admin log shows the same number (“… (keeping the newest 100 per topic)”).
 4. **Switch to Active.** Visitors see “Only the newest 100 posts in this topic are kept, as well as the first post.” in the topic.
 
 Only **approved** posts count (not the first post). A topic with **fewer than 100** approved posts loses nothing, not even unapproved or soft-deleted posts. From **exactly 100** on the limit applies: all approved posts stay, unapproved and soft-deleted posts older than the oldest of them are deleted. New posts move the limit: after 5 new replies the 5 oldest go on the next run. A large backlog is worked off in portions (at most 200 posts per run, see below).
 
 ### Preview / running it by hand
 
-**Button “Calculate dry run now”** in the block (ACP → Forums → click “Edit” at the forum): it shows right away what a dry run with the **saved** settings would delete now, e.g. “→ 3,541 posts would be deleted (oldest: Sat Mar 02, 2019 2:05 pm, newest to be deleted: Sat Aug 15, 2026 9:12 am)”. It works in every mode, also “Off”, so before switching anything on.
+**Button “Calculate dry run now”** in the block (ACP → Forums → click “Edit” at the forum): it shows right away what a dry run would delete now, with the **values in the form**, even if they are not saved yet, e.g. “→ 3,541 posts would be deleted (oldest: Sat Mar 02, 2019 2:05 pm, newest to be deleted: Sat Aug 15, 2026 9:12 am)”. It works in every mode, also “Off”, so before switching anything on.
 
 - **Nothing is deleted** and nothing is logged; the cron schedule is not touched.
 - It counts with the same rule as the cron, the dry run and the topic notice, without the per-run limit. The number matches the “Dry run …” entry in the log on the next cron run, as long as nothing changes in between.
-- **Unsaved changes do not count.** “Submit” first, then the preview. The line “Saved for …” right above shows which values are used.
-- **Without JavaScript** the button reloads the page; the result then appears below the button. Unsaved changes in the form are lost.
+- **Trying out values:** if the fields differ from the saved state (line “Saved for …” above), the result ends with **“– with the values in the form, not saved yet”**, followed by “Only saved values are used for deleting. “Submit” saves them.” The cron only deletes with saved values. The mode and “Reduce user post counts” do not change the number; marked topics always come from the database.
+- **Invalid values** (e.g. “By number” with “Whole forum”, an empty field, number 0) give no number but the same error message as saving.
+- **Without JavaScript** the button reloads the page and uses the **saved** settings; the result then appears below the button. Unsaved changes in the form are lost.
 - Only for administrators with *Can manage forums* (`a_forum`), and only once the update is complete.
 
 **Advanced:**
@@ -285,7 +287,7 @@ Only **approved** posts count (not the first post). A topic with **fewer than 10
 ### Recommended procedure
 
 1. **Backup first**: database and `files/`.
-2. **Then dry run**: save the settings, check the number right away with “Calculate dry run now”, set the mode to “Dry run” and wait. The **admin log** then shows “Dry run: post pruning – N posts in forum “…” would be deleted”. Nothing is deleted.
+2. **Then dry run**: try out values in the form with “Calculate dry run now” until the number looks right, set the mode to “Dry run”, click “Submit” once and wait. The **admin log** then shows “Dry run: post pruning – N posts in forum “…” would be deleted”. Nothing is deleted.
 3. **Then Active**, once the number looks right. Every deletion is recorded in the admin log (“Post pruning – N posts deleted in forum “…””).
 
 ### When does pruning run?
@@ -300,7 +302,7 @@ Only **approved** posts count (not the first post). A topic with **fewer than 10
 
 Deletion goes exclusively through the phpBB core function `delete_posts()` (`includes/functions_admin.php`). It removes attachments including their files, search index entries, reports and notifications and resyncs topics and forums. The extension contains no DELETE statements of its own.
 
-Whether a topic is subject to pruning is decided by one single rule (`query_builder::topic_where()`). The cron, the dry run, the preview and the topic notice share it, so the notice shows exactly the topics the cron prunes, and the preview the same number as the dry run.
+Whether a topic is subject to pruning is decided by one single rule (`query_builder::topic_where()`). The cron, the dry run, the preview and the topic notice share it, so the notice shows exactly the topics the cron prunes, and the preview the same number as the dry run. The checks of the settings (ranges, allowed values, “By number” only with marked topics) are in one place too (`prune\settings::errors()`) and apply to saving and to the preview.
 
 The deletion rule “By number” needs no window functions: per topic the X-th newest approved post is read as the limit, everything before it is deleted (by time, with equal times by post ID).
 
