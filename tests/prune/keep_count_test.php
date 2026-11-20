@@ -242,7 +242,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(1, $qb->keep_count(['uflagmey_pp_keep_count' => 0]));
 		$this->assertSame(65535, $qb->keep_count(['uflagmey_pp_keep_count' => 70000]));
 		$this->assertSame(query_builder::RULE_AGE, $qb->rule([]));
-		$this->assertStringNotContainsString('OFFSET', strtoupper($qb->boundary_query(['uflagmey_pp_keep_first' => 1], ['topic_id' => 1, 'topic_first_post_id' => 2])['WHERE']));
+		$this->assertStringNotContainsString('OFFSET', strtoupper($qb->boundary_query(['uflagmey_pp_keep_first' => 1], ['topic_id' => 1])['WHERE']));
 		$this->assertStringNotContainsString('uflagmey_pp_rule', $qb->forums_query(true, false)['SELECT']);
 		$this->assertStringContainsString('uflagmey_pp_rule', $qb->forums_query(true, true)['SELECT']);
 	}

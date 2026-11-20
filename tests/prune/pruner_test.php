@@ -55,7 +55,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 	}
 
 	/**
-	 * Forum A: 5 candidates, B: 3, F: 12 (keep_first=1, each topic start post is young enough to stay anyway).
+	 * Forum A: 5 candidates, B: 3, F: 12 (keep_first=1: each topic start post is the oldest post and stays).
 	 */
 	protected function seed(array $modes = [1 => 2, 2 => 2, 3 => 2], array $count_sync = [])
 	{
@@ -66,7 +66,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 				'uflagmey_pp_mode'			=> $modes[$fid] ?? 0,
 				'uflagmey_pp_count_sync'	=> $count_sync[$fid] ?? 0,
 			]);
-			$posts = [$fid * 100 => 1];
+			$posts = [$fid * 100 => 100];
 			for ($i = 1; $i <= $n; $i++)
 			{
 				$posts[$fid * 100 + $i] = 90 - $i;
@@ -215,7 +215,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 	public function test_num_posts_reduced_by_approved_posts_only_without_count_sync()
 	{
 		fixtures::forum($this->db, 1, 'A', FORUM_POST, ['uflagmey_pp_mode' => 2, 'uflagmey_pp_count_sync' => 0]);
-		fixtures::topic($this->db, 1, 10, [100 => 1, 101 => 80, 102 => [70, ITEM_UNAPPROVED], 103 => [60, ITEM_DELETED], 104 => 50]);
+		fixtures::topic($this->db, 1, 10, [100 => 100, 101 => 80, 102 => [70, ITEM_UNAPPROVED], 103 => [60, ITEM_DELETED], 104 => 50]);
 		$this->pruner()->run(fixtures::NOW, 100);
 
 		$this->assertSame([101, 102, 103, 104], fixtures::$delete_calls[0][1]);
@@ -225,7 +225,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 	public function test_num_posts_left_to_core_with_count_sync()
 	{
 		fixtures::forum($this->db, 1, 'A', FORUM_POST, ['uflagmey_pp_mode' => 2, 'uflagmey_pp_count_sync' => 1]);
-		fixtures::topic($this->db, 1, 10, [100 => 1, 101 => 80, 102 => 70]);
+		fixtures::topic($this->db, 1, 10, [100 => 100, 101 => 80, 102 => 70]);
 		$this->pruner()->run(fixtures::NOW, 100);
 
 		$this->assertSame(1000, (int) $this->config['num_posts'], 'delete_posts() itself decrements with count sync');

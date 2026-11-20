@@ -307,7 +307,7 @@ class query_builder
 	}
 
 	/**
-	 * Rule "count", step 1: the topics the rule applies to, with their start post.
+	 * Rule "count", step 1: the topics the rule applies to.
 	 * Same topics as marked_count_query() (topic_where() plus no shadow topics).
 	 *
 	 * @param array $forum	Row from forums_query()
@@ -316,7 +316,7 @@ class query_builder
 	public function count_topics_query(array $forum)
 	{
 		return [
-			'SELECT'	=> 't.topic_id, t.topic_first_post_id',
+			'SELECT'	=> 't.topic_id',
 			'FROM'		=> [$this->topics_table => 't'],
 			'WHERE'		=> $this->topic_where($forum) . '
 				AND t.topic_moved_id = 0',
@@ -330,7 +330,7 @@ class query_builder
 	 * and takes the X-th as the boundary (boundary()); fewer than X rows: nothing
 	 * to delete. Deliberately no offset: phpBB's Oracle driver returns one row too
 	 * early with an offset, and window functions are not available everywhere.
-	 * With keep_first the start post neither counts towards X nor is deleted.
+	 * With keep_first the start post (not_first_post()) neither counts towards X nor is deleted.
 	 *
 	 * @param array	$forum	Row from forums_query()
 	 * @param array	$topic	Row from count_topics_query()
@@ -344,7 +344,7 @@ class query_builder
 		if (!empty($forum['uflagmey_pp_keep_first']))
 		{
 			$where .= '
-			AND p.post_id <> ' . (int) $topic['topic_first_post_id'];
+			AND ' . $this->not_first_post();
 		}
 
 		return [
@@ -433,9 +433,29 @@ class query_builder
 		if (!empty($forum['uflagmey_pp_keep_first']))
 		{
 			$where .= '
-			AND p.post_id <> t.topic_first_post_id';
+			AND ' . $this->not_first_post();
 		}
 
 		return $where;
+	}
+
+	/**
+	 * "Keep first post": the start post is the EARLIEST post of the topic by
+	 * (post_time, post_id), whatever its visibility, so exactly one post per
+	 * topic is protected. Not topics.topic_first_post_id: phpBB moves that to the
+	 * oldest APPROVED post when the start post is soft-deleted or unapproved.
+	 * Condition on the posts row p (the alias every query of this class uses for the posts
+	 * table): some other post of the same topic comes before it.
+	 * EXISTS instead of a window function (not available on every supported database).
+	 *
+	 * @return string	SQL condition: p is NOT the start post
+	 */
+	public function not_first_post()
+	{
+		return 'EXISTS (SELECT 1
+				FROM ' . $this->posts_table . ' p0
+				WHERE p0.topic_id = p.topic_id
+					AND (p0.post_time < p.post_time
+						OR (p0.post_time = p.post_time AND p0.post_id < p.post_id)))';
 	}
 }

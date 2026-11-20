@@ -76,7 +76,8 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		{
 			$this->assertStringContainsString('p.forum_id = 7', $q['WHERE']);
 			$this->assertStringContainsString('p.post_time < ' . (fixtures::NOW - 30 * 86400), $q['WHERE']);
-			$this->assertSame($has_first, strpos($q['WHERE'], 'p.post_id <> t.topic_first_post_id') !== false);
+			$this->assertSame($has_first, strpos($q['WHERE'], $qb->not_first_post()) !== false);
+			$this->assertStringNotContainsString('topic_first_post_id', $q['WHERE'], 'the start post is the earliest post, not topic_first_post_id');
 			$this->assertSame($has_type, strpos($q['WHERE'], 't.topic_type =') !== false);
 			$this->assertStringNotContainsString('post_visibility =', $q['WHERE'], 'visibility must not matter');
 		}
@@ -115,8 +116,8 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 		fixtures::topic($db, 1, 12, [120 => 90, 121 => 80], POST_STICKY);
 		fixtures::topic($db, 1, 13, [130 => 90, 131 => 80], POST_ANNOUNCE);
 		fixtures::topic($db, 1, 14, [140 => 90, 141 => 80], POST_GLOBAL);
-		// same age as 101 but a higher id: tie broken by post_id
-		fixtures::topic($db, 1, 15, [150 => 70, 151 => 80]);
+		// reply 151 has the same age as 101 but a higher id: tie broken by post_id
+		fixtures::topic($db, 1, 15, [150 => 90, 151 => 80]);
 		// another forum, old
 		fixtures::topic($db, 2, 20, [200 => 90, 201 => 80]);
 		if ($marked)
@@ -149,7 +150,7 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 	public function test_candidates_without_keep_first()
 	{
 		list($ids) = $this->select(['uflagmey_pp_keep_first' => 0, 'uflagmey_pp_skip_sticky' => 1]);
-		$this->assertSame([100, 101, 151, 150, 110, 111, 112, 113, 102], $ids);
+		$this->assertSame([100, 150, 101, 151, 110, 111, 112, 113, 102], $ids, 'oldest first: 100 and 150 (90 days, by id), 101 and 151 (80 days, by id), ...');
 	}
 
 	public function test_candidates_without_skip_sticky()
