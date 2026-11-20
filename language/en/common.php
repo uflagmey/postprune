@@ -20,7 +20,7 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SETTINGS'				=> 'Post pruning (individual posts)',
-	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Automatically and permanently deletes individual posts in this forum, including their attachments, according to the configured deletion rule (by age or by number). Unlike topic pruning above, this works on single posts.',
+	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Automatically and permanently deletes individual posts in this forum, including their attachments, according to the configured deletion rule (by age or by number). Unlike topic pruning above, this works on single posts. Posts waiting for approval are never deleted. Soft-deleted posts are deleted too and named separately in the preview and the log.',
 	'UFLAGMEY_PP_MODE'					=> 'Post pruning mode',
 	'UFLAGMEY_PP_MODE_EXPLAIN'			=> 'Off: nothing happens. Dry run: only writes to the admin log how many posts would be deleted. Active: posts are deleted permanently.',
 	'UFLAGMEY_PP_MODE_OFF'				=> 'Off',
@@ -69,7 +69,7 @@ $lang = array_merge($lang, [
 	],
 	'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN'	=> 'The first post would be kept.',
 	'UFLAGMEY_PP_RULE'					=> 'Deletion rule',
-	'UFLAGMEY_PP_RULE_EXPLAIN'			=> 'By age: posts older than the configured number of days are deleted. By number: per topic only the newest approved posts are kept, older ones are deleted, including unapproved and deleted ones. “By number” requires the scope “Marked topics only”.',
+	'UFLAGMEY_PP_RULE_EXPLAIN'			=> 'By age: posts older than the configured number of days are deleted. By number: per topic only the newest approved posts are kept, older ones are deleted. “By number” requires the scope “Marked topics only”.',
 	'UFLAGMEY_PP_RULE_AGE'				=> 'By age',
 	'UFLAGMEY_PP_RULE_COUNT'			=> 'By number',
 	'UFLAGMEY_PP_KEEP_COUNT'			=> 'Number to keep',
@@ -107,6 +107,10 @@ $lang = array_merge($lang, [
 		2	=> '→ <strong>%2$s posts</strong> would be deleted (oldest: %3$s, newest to be deleted: %4$s)',
 	],
 	'UFLAGMEY_PP_PREVIEW_UNSAVED'		=> '%s – <strong>with the values in the form, not saved yet</strong><br>Only saved values are used for deleting. “Submit” saves them.',
+	'UFLAGMEY_PP_PREVIEW_RESULT_SOFT'	=> [
+		1	=> '→ <strong>%2$s post</strong> (soft-deleted) would be deleted (date: %3$s)',
+		2	=> '→ <strong>%2$s posts</strong> would be deleted, %5$s of them soft-deleted (oldest: %3$s, newest to be deleted: %4$s)',
+	],
 	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Not a post forum, post pruning does not process it.',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'The preview could not be calculated (database error).',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> ',',

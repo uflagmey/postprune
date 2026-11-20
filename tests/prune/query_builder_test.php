@@ -79,7 +79,7 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 			$this->assertSame($has_first, strpos($q['WHERE'], $qb->not_first_post()) !== false);
 			$this->assertStringNotContainsString('topic_first_post_id', $q['WHERE'], 'the start post is the earliest post, not topic_first_post_id');
 			$this->assertSame($has_type, strpos($q['WHERE'], 't.topic_type =') !== false);
-			$this->assertStringNotContainsString('post_visibility =', $q['WHERE'], 'visibility must not matter');
+			$this->assertStringContainsString('p.post_visibility IN (' . ITEM_APPROVED . ', ' . ITEM_DELETED . ')', $q['WHERE'], 'approved and soft-deleted only, never posts waiting for approval');
 		}
 		$this->assertSame('p.post_time ASC, p.post_id ASC', $qb->candidates_query($forum, fixtures::NOW)['ORDER_BY']);
 	}
@@ -142,21 +142,22 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 	public function test_candidates_keep_first_and_skip_sticky()
 	{
 		list($ids, $count) = $this->select(['uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1]);
-		// oldest first; 101 and 151 both 80d -> by post_id; 103 (exactly 30d) and 104 are not old
-		$this->assertSame([101, 151, 111, 112, 113, 102], $ids);
+		// oldest first; 101 and 151 both 80d -> by post_id; 103 (exactly 30d) and 104 are not old;
+		// 111 (unapproved) and 113 (reapprove) wait for approval and never go, 112 (soft-deleted) goes
+		$this->assertSame([101, 151, 112, 102], $ids);
 		$this->assertSame(count($ids), $count);
 	}
 
 	public function test_candidates_without_keep_first()
 	{
 		list($ids) = $this->select(['uflagmey_pp_keep_first' => 0, 'uflagmey_pp_skip_sticky' => 1]);
-		$this->assertSame([100, 150, 101, 151, 110, 111, 112, 113, 102], $ids, 'oldest first: 100 and 150 (90 days, by id), 101 and 151 (80 days, by id), ...');
+		$this->assertSame([100, 150, 101, 151, 110, 112, 102], $ids, 'oldest first: 100 and 150 (90 days, by id), 101 and 151 (80 days, by id), ...; no posts waiting for approval');
 	}
 
 	public function test_candidates_without_skip_sticky()
 	{
 		list($ids) = $this->select(['uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 0]);
-		$this->assertSame([101, 121, 131, 141, 151, 111, 112, 113, 102], $ids);
+		$this->assertSame([101, 121, 131, 141, 151, 112, 102], $ids);
 	}
 
 	public function test_candidates_never_cross_forums()
@@ -210,7 +211,7 @@ class query_builder_test extends \PHPUnit\Framework\TestCase
 
 	public function test_scope_forum_ignores_marks_exactly_like_beta2()
 	{
-		$beta2 = [101, 151, 111, 112, 113, 102];
+		$beta2 = [101, 151, 112, 102];	// as in beta2, minus the posts waiting for approval (rc1)
 		list($ids) = $this->select(['uflagmey_pp_scope' => 0, 'uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], [10, 12]);
 		$this->assertSame($beta2, $ids, 'scope 0');
 		list($ids) = $this->select(['uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1], [10, 12]);

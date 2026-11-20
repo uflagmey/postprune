@@ -218,7 +218,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		fixtures::topic($this->db, 1, 10, [100 => 100, 101 => 80, 102 => [70, ITEM_UNAPPROVED], 103 => [60, ITEM_DELETED], 104 => 50]);
 		$this->pruner()->run(fixtures::NOW, 100);
 
-		$this->assertSame([101, 102, 103, 104], fixtures::$delete_calls[0][1]);
+		$this->assertSame([101, 103, 104], fixtures::$delete_calls[0][1], '102 waits for approval and stays');
 		$this->assertSame(998, (int) $this->config['num_posts'], '2 approved of 4 deleted');
 	}
 

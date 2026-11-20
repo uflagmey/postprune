@@ -135,7 +135,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(range(10002, 10101), $this->ids(10));
 	}
 
-	public function test_status_mix_unapproved_and_deleted_do_not_count_but_go_when_older()
+	public function test_status_mix_unapproved_and_deleted_do_not_count_soft_deleted_go_when_older()
 	{
 		// every 3rd post unapproved, every 5th (not 3rd) soft-deleted
 		$vis = function ($i) {
@@ -150,7 +150,13 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 			return $vis($i) === ITEM_APPROVED;
 		}));
 		$boundary = 10000 + $approved[count($approved) - 10];
-		$this->assertSame(array_merge([10001], range($boundary, 10060)), $left, 'start post + everything from the 10th newest approved on');
+		$waiting = array_map(function ($i) {
+			return 10000 + $i;
+		}, array_values(array_filter(range(2, $boundary - 10001), function ($i) use ($vis) {
+			return $vis($i) === ITEM_UNAPPROVED;
+		})));
+		$this->assertSame(array_merge([10001], $waiting, range($boundary, 10060)), $left,
+			'start post + the older posts waiting for approval (never deleted) + everything from the 10th newest approved on');
 		$this->assertSame(10, count(array_filter($left, function ($id) use ($vis) {
 			return $id !== 10001 && $vis($id - 10000) === ITEM_APPROVED;
 		})));
@@ -247,7 +253,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->assertStringContainsString('uflagmey_pp_rule', $qb->forums_query(true, true)['SELECT']);
 	}
 
-	public function test_status_mix_fewer_than_x_approved_loses_nothing_exactly_x_loses_only_older_non_approved()
+	public function test_status_mix_fewer_than_x_approved_loses_nothing_exactly_x_loses_only_older_soft_deleted()
 	{
 		$this->forum(10, 1);
 		// topic 10: start + 18 replies, every 2nd reply unapproved/soft-deleted: 9 approved replies < X
@@ -261,6 +267,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->cycle();
 
 		$this->assertSame(range(10001, 10019), $this->ids(10), 'fewer than X approved: nothing goes, not even unapproved or soft-deleted posts');
-		$this->assertSame(array_merge([11001], range(11008, 11017)), $this->ids(11), 'exactly X approved: all kept, the older non-approved posts go');
+		$this->assertSame(array_merge([11001, 11002, 11004, 11006], range(11008, 11017)), $this->ids(11),
+			'exactly X approved: all kept; of the older non-approved posts only the soft-deleted go, unapproved ones stay');
 	}
 }

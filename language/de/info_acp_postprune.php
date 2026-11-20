@@ -70,4 +70,45 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
 		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
 	],
+	// soft-deleted posts among them (rc1): same text, their number is the last value
+	'LOG_UFLAGMEY_PP_DRYRUN_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) im Forum „%1$s“ würde gelöscht',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge im Forum „%1$s“ würden gelöscht, davon %3$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) im Forum „%1$s“ gelöscht',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge im Forum „%1$s“ gelöscht, davon %3$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_TOPIC_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ würde gelöscht',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ würden gelöscht, davon %4$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_TOPICS_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ würde gelöscht',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ würden gelöscht, davon %4$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_TOPIC_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ gelöscht',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ gelöscht, davon %4$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_TOPICS_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ gelöscht',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht, davon %4$d soft-gelöscht',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ würden gelöscht, davon %5$d soft-gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPICS_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ würden gelöscht, davon %5$d soft-gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ gelöscht, davon %5$d soft-gelöscht (neueste %4$d je Thema behalten)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPICS_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht, davon %5$d soft-gelöscht (neueste %4$d je Thema behalten)',
+	],
 ]);

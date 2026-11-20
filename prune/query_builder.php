@@ -180,7 +180,8 @@ class query_builder
 	}
 
 	/**
-	 * Candidate posts of one forum, oldest first. Visibility does not matter.
+	 * Candidate posts of one forum, oldest first: approved and soft-deleted posts only
+	 * (see candidates_where()).
 	 *
 	 * @param array	$forum	Row from forums_query()
 	 * @param int	$now
@@ -198,8 +199,8 @@ class query_builder
 	}
 
 	/**
-	 * Number of candidate posts of one forum with the post_time of the oldest
-	 * and the newest one (dry run and ACP preview, same query).
+	 * Number of candidate posts of one forum, how many of them are soft-deleted, and the
+	 * post_time of the oldest and the newest one (dry run and ACP preview, same query).
 	 *
 	 * @param array	$forum	Row from forums_query()
 	 * @param int	$now
@@ -209,7 +210,8 @@ class query_builder
 	public function count_query(array $forum, $now, array $bounds = [])
 	{
 		return [
-			'SELECT'	=> 'COUNT(p.post_id) AS num_posts, MIN(p.post_time) AS oldest, MAX(p.post_time) AS newest',
+			'SELECT'	=> 'COUNT(p.post_id) AS num_posts, SUM(CASE WHEN p.post_visibility = ' . ITEM_DELETED . ' THEN 1 ELSE 0 END) AS num_softdeleted,
+				MIN(p.post_time) AS oldest, MAX(p.post_time) AS newest',
 			'FROM'		=> [$this->posts_table => 'p', $this->topics_table => 't'],
 			'WHERE'		=> $this->candidates_where($forum, $now, $bounds),
 		];
@@ -396,9 +398,10 @@ class query_builder
 
 	/**
 	 * Rule "age": older than the cutoff. Rule "count": per topic everything
-	 * ordered before its boundary (post_time, then post_id), whatever the
-	 * visibility; topics without a boundary (fewer than X approved posts) and
-	 * an empty $bounds select nothing.
+	 * ordered before its boundary (post_time, then post_id); topics without a
+	 * boundary (fewer than X approved posts) and an empty $bounds select nothing.
+	 * Both rules: only approved and soft-deleted posts. Posts waiting for approval
+	 * (unapproved, reapprove) or with any other visibility are never deleted.
 	 *
 	 * @param array	$forum
 	 * @param int	$now
@@ -409,6 +412,7 @@ class query_builder
 	{
 		$where = 'p.topic_id = t.topic_id
 			AND p.forum_id = ' . (int) $forum['forum_id'] . '
+			AND p.post_visibility IN (' . ITEM_APPROVED . ', ' . ITEM_DELETED . ')
 			AND ' . $this->topic_where($forum);
 
 		if ($this->rule($forum) === self::RULE_COUNT)

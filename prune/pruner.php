@@ -155,13 +155,16 @@ class pruner
 				continue;
 			}
 
+			$softdeleted = count(array_filter($rows, function ($row) {
+				return (int) $row['post_visibility'] === ITEM_DELETED;
+			}));
 			$deleted = $this->delete($rows, (bool) $forum['uflagmey_pp_count_sync']);
 			$remaining -= count($rows);
 			$pruned[(int) $forum['forum_id']] = $deleted;
 
 			if ($deleted)
 			{
-				$this->log_result('LOG_UFLAGMEY_PP_PRUNED', $forum, $deleted, $topics);
+				$this->log_result('LOG_UFLAGMEY_PP_PRUNED', $forum, $deleted, $topics, min($softdeleted, $deleted));
 			}
 		}
 
@@ -192,7 +195,7 @@ class pruner
 					continue;
 				}
 
-				$this->log_result('LOG_UFLAGMEY_PP_DRYRUN', $forum, $count['num'], $count['topics']);
+				$this->log_result('LOG_UFLAGMEY_PP_DRYRUN', $forum, $count['num'], $count['topics'], $count['softdeleted']);
 			}
 		}
 
@@ -215,7 +218,8 @@ class pruner
 	 * @param array	$form	Values from the form, checked by settings::errors(); only
 	 *						settings::PREVIEW_KEYS count, as integers
 	 * @return array|null|false	['forum' => settings row used, 'post_forum' => bool, 'topics' => int|null,
-	 *							'num' => int, 'oldest' => int, 'newest' => int]; null: no such forum; false: a query failed
+	 *							'num' => int, 'softdeleted' => int, 'oldest' => int, 'newest' => int];
+	 *							null: no such forum; false: a query failed
 	 */
 	public function preview($forum_id, $now, array $form = [])
 	{
@@ -235,7 +239,7 @@ class pruner
 			}
 		}
 		$post_forum = ((int) $forum['forum_type'] === FORUM_POST);
-		$count = $post_forum ? $this->count($forum, $now) : ['topics' => $this->marked_topics($forum), 'num' => 0, 'oldest' => 0, 'newest' => 0];
+		$count = $post_forum ? $this->count($forum, $now) : ['topics' => $this->marked_topics($forum), 'num' => 0, 'softdeleted' => 0, 'oldest' => 0, 'newest' => 0];
 		if ($count === false || $count['topics'] === false)
 		{
 			return false;
@@ -249,8 +253,8 @@ class pruner
 	 *
 	 * @param array	$forum	Row from forums_query() or query_builder::forum_query()
 	 * @param int	$now
-	 * @return array|false	['topics' => int|null (see marked_topics()), 'num' => int, 'oldest' => int, 'newest' => int];
-	 *						false: a query failed
+	 * @return array|false	['topics' => int|null (see marked_topics()), 'num' => int, 'softdeleted' => int (of num),
+	 *						'oldest' => int, 'newest' => int]; false: a query failed
 	 */
 	protected function count(array $forum, $now)
 	{
@@ -260,7 +264,7 @@ class pruner
 			return false;
 		}
 
-		$count = ['topics' => $topics, 'num' => 0, 'oldest' => 0, 'newest' => 0];
+		$count = ['topics' => $topics, 'num' => 0, 'softdeleted' => 0, 'oldest' => 0, 'newest' => 0];
 		if ($topics === 0)
 		{
 			return $count;
@@ -285,6 +289,7 @@ class pruner
 		$count['num'] = (int) $rows[0]['num_posts'];
 		if ($count['num'])
 		{
+			$count['softdeleted'] = (int) $rows[0]['num_softdeleted'];
 			$count['oldest'] = (int) $rows[0]['oldest'];
 			$count['newest'] = (int) $rows[0]['newest'];
 		}
@@ -337,30 +342,40 @@ class pruner
 	/**
 	 * Log entry of a dry run or a deletion. Scope "whole forum": $prefix;
 	 * "marked topics only": $prefix_TOPIC(S), rule "count" $prefix_KEEP_TOPIC(S)
-	 * with X as fourth value.
+	 * with X as fourth value. With soft-deleted posts among them: the same key
+	 * with _SOFT and their number as the last value (older entries stay readable).
 	 *
-	 * @param string	$prefix	LOG_UFLAGMEY_PP_DRYRUN or LOG_UFLAGMEY_PP_PRUNED
+	 * @param string	$prefix			LOG_UFLAGMEY_PP_DRYRUN or LOG_UFLAGMEY_PP_PRUNED
 	 * @param array		$forum
-	 * @param int		$num	Number of posts
-	 * @param int|null	$topics	Number of marked topics, null for scope "whole forum"
+	 * @param int		$num			Number of posts
+	 * @param int|null	$topics			Number of marked topics, null for scope "whole forum"
+	 * @param int		$softdeleted	How many of $num are soft-deleted
 	 */
-	protected function log_result($prefix, array $forum, $num, $topics)
+	protected function log_result($prefix, array $forum, $num, $topics, $softdeleted = 0)
 	{
 		if ($topics === null)
 		{
-			$this->add_log($prefix, [$forum['forum_name'], $num]);
-			return;
+			$operation = $prefix;
+			$data = [$forum['forum_name'], $num];
 		}
-
-		$suffix = ($topics === 1) ? '_TOPIC' : '_TOPICS';
-		if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
+		else if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
 		{
-			$this->add_log($prefix . '_KEEP' . $suffix, [$forum['forum_name'], $num, $topics, $this->query_builder->keep_count($forum)]);
+			$operation = $prefix . '_KEEP' . (($topics === 1) ? '_TOPIC' : '_TOPICS');
+			$data = [$forum['forum_name'], $num, $topics, $this->query_builder->keep_count($forum)];
 		}
 		else
 		{
-			$this->add_log($prefix . $suffix, [$forum['forum_name'], $num, $topics]);
+			$operation = $prefix . (($topics === 1) ? '_TOPIC' : '_TOPICS');
+			$data = [$forum['forum_name'], $num, $topics];
 		}
+
+		if ($softdeleted > 0)
+		{
+			$operation .= '_SOFT';
+			$data[] = (int) $softdeleted;
+		}
+
+		$this->add_log($operation, $data);
 	}
 
 	/**

@@ -146,7 +146,7 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$day = function ($days) {
 			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
 		};
-		$this->assertSame('UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3), $data['UFLAGMEY_PP_PREVIEW_RESULT'],
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3) . '|0', $data['UFLAGMEY_PP_PREVIEW_RESULT'],
 			'posts 102 and 103 (keep the newest 2 besides the start post); the GET value keep_count=1 does not count');
 		$this->assertSame([[false, true], [false, true]], $this->date_calls, 'board/user date format with time, never "Today"');
 		$this->assertSame([], $this->logs, 'no log entry');
@@ -248,7 +248,7 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$day = function ($days) {
 			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
 		};
-		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|3|3|' . $day(4) . '|' . $day(2), $result,
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|3|3|' . $day(4) . '|' . $day(2) . '|0', $result,
 			'keep the newest 1 besides the start post: posts 102, 103, 104');
 		$this->assertSame([], $this->logs, 'no log entry');
 		$this->assertCount(5, fixtures::post_ids($this->db));

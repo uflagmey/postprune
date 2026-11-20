@@ -481,10 +481,13 @@ class listener implements EventSubscriberInterface
 			return $this->language->lang('UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM');
 		}
 
-		return $this->language->lang('UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
-			number_format($result['num'], 0, '', $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP')),
+		$sep = $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP');
+
+		return $this->language->lang($result['softdeleted'] ? 'UFLAGMEY_PP_PREVIEW_RESULT_SOFT' : 'UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
+			number_format($result['num'], 0, '', $sep),
 			$result['num'] ? $this->user->format_date($result['oldest'], false, true) : '',
-			$result['num'] ? $this->user->format_date($result['newest'], false, true) : '');
+			$result['num'] ? $this->user->format_date($result['newest'], false, true) : '',
+			number_format($result['softdeleted'], 0, '', $sep));
 	}
 
 	/**

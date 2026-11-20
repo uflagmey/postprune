@@ -20,7 +20,7 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SETTINGS'				=> 'Beitrags-Pruning (einzelne Beiträge)',
-	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Löscht in diesem Forum einzelne Beiträge samt Dateianhängen automatisch und endgültig, nach der eingestellten Löschregel (nach Alter oder nach Anzahl). Anders als das Themen-Pruning oben arbeitet dies auf Beitragsebene.',
+	'UFLAGMEY_PP_SETTINGS_EXPLAIN'		=> 'Löscht in diesem Forum einzelne Beiträge samt Dateianhängen automatisch und endgültig, nach der eingestellten Löschregel (nach Alter oder nach Anzahl). Anders als das Themen-Pruning oben arbeitet dies auf Beitragsebene. Beiträge, die auf Freigabe warten, werden nie gelöscht. Soft-gelöschte Beiträge werden mit gelöscht und in Vorschau und Protokoll getrennt genannt.',
 	'UFLAGMEY_PP_MODE'					=> 'Modus Beitrags-Pruning',
 	'UFLAGMEY_PP_MODE_EXPLAIN'			=> 'Aus: Es passiert nichts. Trockenlauf: Es wird nur im Administrations-Protokoll vermerkt, wie viele Beiträge gelöscht würden. Aktiv: Beiträge werden endgültig gelöscht.',
 	'UFLAGMEY_PP_MODE_OFF'				=> 'Aus',
@@ -69,7 +69,7 @@ $lang = array_merge($lang, [
 	],
 	'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN'	=> 'Der erste Beitrag bliebe erhalten.',
 	'UFLAGMEY_PP_RULE'					=> 'Löschregel',
-	'UFLAGMEY_PP_RULE_EXPLAIN'			=> 'Nach Alter: Beiträge, die älter als die eingestellte Anzahl Tage sind, werden gelöscht. Nach Anzahl: Je Thema bleiben nur die neuesten freigegebenen Beiträge erhalten, ältere werden gelöscht, auch ungeprüfte und gelöschte. „Nach Anzahl“ ist nur mit dem Geltungsbereich „Nur markierte Themen“ möglich.',
+	'UFLAGMEY_PP_RULE_EXPLAIN'			=> 'Nach Alter: Beiträge, die älter als die eingestellte Anzahl Tage sind, werden gelöscht. Nach Anzahl: Je Thema bleiben nur die neuesten freigegebenen Beiträge erhalten, ältere werden gelöscht. „Nach Anzahl“ ist nur mit dem Geltungsbereich „Nur markierte Themen“ möglich.',
 	'UFLAGMEY_PP_RULE_AGE'				=> 'Nach Alter',
 	'UFLAGMEY_PP_RULE_COUNT'			=> 'Nach Anzahl',
 	'UFLAGMEY_PP_KEEP_COUNT'			=> 'Anzahl behalten',
@@ -107,6 +107,10 @@ $lang = array_merge($lang, [
 		2	=> '→ <strong>%2$s Beiträge</strong> würden gelöscht (ältester vom %3$s, jüngster zu löschender vom %4$s)',
 	],
 	'UFLAGMEY_PP_PREVIEW_UNSAVED'		=> '%s – <strong>mit den Werten im Formular, noch nicht gespeichert</strong><br>Gelöscht wird nur mit gespeicherten Werten. Erst „Absenden“ übernimmt sie.',
+	'UFLAGMEY_PP_PREVIEW_RESULT_SOFT'	=> [
+		1	=> '→ <strong>%2$s Beitrag</strong> (soft-gelöscht) würde gelöscht (vom %3$s)',
+		2	=> '→ <strong>%2$s Beiträge</strong> würden gelöscht, davon %5$s soft-gelöscht (ältester vom %3$s, jüngster zu löschender vom %4$s)',
+	],
 	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Kein Beitragsforum, das Beitrags-Pruning bearbeitet es nicht.',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'Die Vorschau konnte nicht berechnet werden (Datenbankfehler).',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> '.',

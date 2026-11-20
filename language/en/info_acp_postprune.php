@@ -70,4 +70,45 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
 		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
 	],
+	// soft-deleted posts among them (rc1): same text, their number is the last value
+	'LOG_UFLAGMEY_PP_DRYRUN_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in forum “%1$s” would be deleted',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in forum “%1$s” would be deleted, %3$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in forum “%1$s”',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in forum “%1$s”, %3$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_TOPIC_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topic in forum “%1$s” would be deleted',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topic in forum “%1$s” would be deleted, %4$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_TOPICS_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topics in forum “%1$s” would be deleted',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topics in forum “%1$s” would be deleted, %4$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_TOPIC_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topic in forum “%1$s”',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topic in forum “%1$s”, %4$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_TOPICS_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topics in forum “%1$s”',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s”, %4$d of them soft-deleted',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topic in forum “%1$s” would be deleted, %5$d of them soft-deleted (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPICS_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topics in forum “%1$s” would be deleted, %5$d of them soft-deleted (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic)',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topic in forum “%1$s”, %5$d of them soft-deleted (keeping the newest %4$d per topic)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPICS_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s”, %5$d of them soft-deleted (keeping the newest %4$d per topic)',
+	],
 ]);
