@@ -10,7 +10,7 @@ phpBB-3.3-Extension: löscht in ausgewählten Foren **einzelne Beiträge** autom
 
 Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. Diese Extension arbeitet auf Beitragsebene und lässt sich mit dem Themen-Pruning kombinieren.
 
-> **Beta (1.0.0-beta4):** Erst auf einem Testboard oder mit Backup + Trockenlauf einsetzen.
+> **Beta (1.0.0-beta5):** Erst auf einem Testboard oder mit Backup + Trockenlauf einsetzen.
 
 > **⚠ Achtung: Die Löschung ist hart und unwiderruflich.**
 > Gelöschte Beiträge landen nicht im Papierkorb (kein Soft-Delete). Beiträge, Dateianhänge (auch die Dateien in `files/`), Suchindex-Einträge, Meldungen und Benachrichtigungen sind danach weg. Ohne Backup gibt es keinen Weg zurück.
@@ -24,10 +24,12 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 - phpBB 3.3.17 und 3.3.19
 - Datenbanken: MySQL/MariaDB, PostgreSQL, SQLite. MS SQL Server und Oracle sind nicht getestet.
+- PHP 8.3, 8.4 und 8.5, jeweils mit phpBB 3.3.17 und 3.3.19: alle Tests grün, keine Meldungen der Extension im PHP-Fehlerlog. phpBB 3.3 selbst unterstützt offiziell PHP bis 8.3; unter 8.4/8.5 schreibt der phpBB-Kern Deprecation-Hinweise ins PHP-Fehlerlog (nicht die Extension).
+- PHP 7.2 bis 8.2: nur statisch geprüft (PHPCompatibility), nicht in Laufzeit-Tests.
 
 ### Installation
 
-> **Download:** [Release v1.0.0-beta4](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta4) → Datei `postprune-1.0.0-beta4.zip` (alle Versionen: [Releases](https://github.com/uflagmey/postprune/releases)).
+> **Download:** [Release v1.0.0-beta5](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta5) → Datei `postprune-1.0.0-beta5.zip` (alle Versionen: [Releases](https://github.com/uflagmey/postprune/releases)).
 > **Nicht** über „Code → Download ZIP“ installieren: Das ist der Quellcode mit falscher Ordnerstruktur (`postprune-main/`) und kein Installationspaket.
 
 1. Das Release-ZIP entpacken und den Ordner `uflagmey/postprune/` nach `ext/` hochladen, so dass `ext/uflagmey/postprune/ext.php` existiert.
@@ -159,7 +161,7 @@ phpBB 3.3 extension: automatically and **permanently** deletes **individual post
 
 phpBB's built-in topic pruning removes whole topics after inactivity. This extension works on single posts and can be combined with topic pruning.
 
-> **Beta (1.0.0-beta4):** Use it on a test board first, or with a backup + dry run.
+> **Beta (1.0.0-beta5):** Use it on a test board first, or with a backup + dry run.
 
 > **⚠ Warning: deletion is hard and irreversible.**
 > Deleted posts are not soft-deleted. Posts, attachments (including the files in `files/`), search index entries, reports and notifications are gone. Without a backup there is no way back.
@@ -173,10 +175,12 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 
 - phpBB 3.3.17 and 3.3.19
 - Databases: MySQL/MariaDB, PostgreSQL, SQLite. MS SQL Server and Oracle are not tested.
+- PHP 8.3, 8.4 and 8.5, each with phpBB 3.3.17 and 3.3.19: all tests green, no messages from the extension in the PHP error log. phpBB 3.3 itself officially supports PHP up to 8.3; on 8.4/8.5 the phpBB core writes deprecation notices to the PHP error log (not the extension).
+- PHP 7.2 to 8.2: checked statically only (PHPCompatibility), not in runtime tests.
 
 ### Installation
 
-> **Download:** [Release v1.0.0-beta4](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta4) → file `postprune-1.0.0-beta4.zip` (all versions: [Releases](https://github.com/uflagmey/postprune/releases)).
+> **Download:** [Release v1.0.0-beta5](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta5) → file `postprune-1.0.0-beta5.zip` (all versions: [Releases](https://github.com/uflagmey/postprune/releases)).
 > Do **not** install from “Code → Download ZIP”: that is the source code with the wrong folder layout (`postprune-main/`), not an installation package.
 
 1. Unpack the release ZIP and upload the folder `uflagmey/postprune/` to `ext/`, so that `ext/uflagmey/postprune/ext.php` exists.

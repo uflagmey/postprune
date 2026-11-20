@@ -1,10 +1,10 @@
 {
 	"name": "uflagmey/postprune",
 	"type": "phpbb-extension",
-	"description": "Automatically hard-deletes individual posts (including attachments) older than N days in selected forums.",
+	"description": "Automatically hard-deletes individual posts (including attachments) in selected forums: older than N days, or all but the newest X per marked topic.",
 	"homepage": "https://github.com/uflagmey/postprune",
-	"version": "1.0.0-beta4",
-	"time": "2026-11-12",
+	"version": "1.0.0-beta5",
+	"time": "2026-11-20",
 	"license": "GPL-2.0-only",
 	"authors": [
 		{
