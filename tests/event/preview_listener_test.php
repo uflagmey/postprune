@@ -36,9 +36,10 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 	 * @param array	$get		GET values
 	 * @param bool	$a_forum
 	 * @param int	$schema
+	 * @param array	$post		POST values
 	 * @return listener
 	 */
-	protected function listener(array $get, $a_forum = true, $schema = 3)
+	protected function listener(array $get, $a_forum = true, $schema = 3, array $post = [])
 	{
 		$this->db = fixtures::db();
 		fixtures::forum($this->db, 3, 'A', FORUM_POST, ['uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_keep_count' => 2]);
@@ -46,11 +47,23 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$config = new \phpbb\config\config(['uflagmey_pp_schema' => $schema]);
 
 		$request = $this->createMock(\phpbb\request\request_interface::class);
-		$request->method('is_set')->willReturnCallback(function ($name) use ($get) {
-			return array_key_exists($name, $get);
+		$request->method('is_set')->willReturnCallback(function ($name, $type = \phpbb\request\request_interface::REQUEST) use ($get, $post) {
+			return ($type !== \phpbb\request\request_interface::POST && array_key_exists($name, $get))
+				|| ($type !== \phpbb\request\request_interface::GET && array_key_exists($name, $post));
 		});
-		$request->method('variable')->willReturnCallback(function ($name, $default) use ($get) {
-			return array_key_exists($name, $get) ? $get[$name] : $default;
+		$request->method('is_set_post')->willReturnCallback(function ($name) use ($post) {
+			return array_key_exists($name, $post);
+		});
+		// like phpBB: POST over GET, cast to the type of the default
+		$request->method('variable')->willReturnCallback(function ($name, $default) use ($get, $post) {
+			$all = $post + $get;
+			if (!array_key_exists($name, $all))
+			{
+				return $default;
+			}
+			$value = $all[$name];
+			settype($value, gettype($default));
+			return $value;
 		});
 		$request->method('is_ajax')->willReturn(false);
 
@@ -215,5 +228,91 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 
 		$data = $this->edit_form($this->listener([], true, 2));
 		$this->assertArrayNotHasKey('UFLAGMEY_PP_SAVED', $data);
+	}
+
+	/**
+	 * Preview with the values in the form (POST, as the JavaScript of the button sends it).
+	 */
+	protected function form_preview(array $post)
+	{
+		$hash = generate_link_hash('uflagmey_pp_preview.3');
+		$data = $this->edit_form($this->listener(['uflagmey_pp_preview' => 1, 'hash' => $hash], true, 3, ['uflagmey_pp_preview' => 1, 'uflagmey_pp_form' => 1] + $post));
+
+		return $data['UFLAGMEY_PP_PREVIEW_RESULT'];
+	}
+
+	public function test_form_values_count_and_are_marked_not_saved()
+	{
+		$result = $this->form_preview(['uflagmey_pp_keep_count' => '1']);
+
+		$day = function ($days) {
+			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
+		};
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|3|3|' . $day(4) . '|' . $day(2), $result,
+			'keep the newest 1 besides the start post: posts 102, 103, 104');
+		$this->assertSame([], $this->logs, 'no log entry');
+		$this->assertCount(5, fixtures::post_ids($this->db));
+		$this->assertSame('0,1,1,2', implode(',', $this->db->sql_fetchrow($this->db->sql_query('SELECT uflagmey_pp_mode, uflagmey_pp_scope, uflagmey_pp_rule, uflagmey_pp_keep_count FROM phpbb_forums WHERE forum_id = 3'))),
+			'forum row unchanged');
+	}
+
+	public function test_form_values_equal_to_the_stored_ones_give_the_plain_result()
+	{
+		$stored = ['uflagmey_pp_scope' => '1', 'uflagmey_pp_rule' => '1', 'uflagmey_pp_days' => '30', 'uflagmey_pp_keep_count' => '2', 'uflagmey_pp_keep_first' => '1', 'uflagmey_pp_skip_sticky' => '1'];
+		$full = $this->form_preview($stored);
+		$this->assertStringStartsWith('UFLAGMEY_PP_PREVIEW_RESULT|2|2|', $full, 'same count as the stored settings, no marker');
+
+		$this->assertSame($full, $this->form_preview(['uflagmey_pp_keep_count' => '2']), 'fields missing from the POST keep the stored value');
+		$this->assertSame($full, $this->form_preview(['uflagmey_pp_mode' => '2', 'uflagmey_pp_count_sync' => '1'] + $stored), 'mode and post counts do not count');
+	}
+
+	public function test_invalid_form_values_give_the_errors_of_saving_and_no_count()
+	{
+		$cases = [
+			'UFLAGMEY_PP_ERR_RULE_SCOPE'		=> ['uflagmey_pp_scope' => '0'],
+			'UFLAGMEY_PP_ERR_KEEP_COUNT|1|65535'	=> ['uflagmey_pp_keep_count' => '0'],
+			'UFLAGMEY_PP_ERR_DAYS|65535'		=> ['uflagmey_pp_days' => ''],
+			'UFLAGMEY_PP_ERR_KEEP_FIRST'		=> ['uflagmey_pp_keep_first' => '7'],
+			'UFLAGMEY_PP_ERR_SKIP_STICKY'		=> ['uflagmey_pp_skip_sticky' => '2'],
+			'UFLAGMEY_PP_ERR_RULE'				=> ['uflagmey_pp_rule' => '9'],
+			'UFLAGMEY_PP_ERR_SCOPE'				=> ['uflagmey_pp_scope' => '5', 'uflagmey_pp_rule' => '0'],
+		];
+		foreach ($cases as $error => $post)
+		{
+			$result = $this->form_preview($post);
+			$this->assertSame('<span class="error" id="uflagmey_pp_preview_error">' . $error . '</span>', $result, json_encode($post));
+		}
+		$this->assertSame([], $this->logs);
+	}
+
+	public function test_form_values_by_get_are_rejected()
+	{
+		$listener = $this->listener(['uflagmey_pp_preview' => 1, 'uflagmey_pp_form' => 1, 'uflagmey_pp_keep_count' => 1, 'hash' => generate_link_hash('uflagmey_pp_preview.3')]);
+		$this->assertSame('FORM_INVALID', $this->warning(function () use ($listener) {
+			$this->edit_form($listener);
+		}));
+	}
+
+	public function test_form_preview_needs_a_forum_and_the_hash()
+	{
+		$post = ['uflagmey_pp_preview' => 1, 'uflagmey_pp_form' => 1, 'uflagmey_pp_keep_count' => '1'];
+		foreach ([[['hash' => 'deadbeef'], true], [['hash' => generate_link_hash('uflagmey_pp_preview.3')], false]] as list($get, $a_forum))
+		{
+			$listener = $this->listener(['uflagmey_pp_preview' => 1] + $get, $a_forum, 3, $post);
+			$this->assertSame('FORM_INVALID', $this->warning(function () use ($listener) {
+				$this->edit_form($listener);
+			}));
+		}
+	}
+
+	public function test_saving_rejects_a_manipulated_switch()
+	{
+		$listener = $this->listener([]);
+		$data = ['forum_id' => 3, 'uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_days' => 30, 'uflagmey_pp_keep_count' => 2,
+			'uflagmey_pp_keep_first' => 7, 'uflagmey_pp_skip_sticky' => 1, 'uflagmey_pp_count_sync' => 3];
+		$event = new \phpbb\event\data(['forum_data' => $data, 'errors' => []]);
+		$listener->validate_data($event);
+
+		$this->assertSame(['UFLAGMEY_PP_ERR_KEEP_FIRST', 'UFLAGMEY_PP_ERR_COUNT_SYNC'], $event['errors']);
 	}
 }

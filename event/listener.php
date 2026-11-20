@@ -14,14 +14,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use uflagmey\postprune\prune\pruner;
 use uflagmey\postprune\prune\query_builder;
 use uflagmey\postprune\prune\schema;
+use uflagmey\postprune\prune\settings;
 
 /**
  * Adds the per-forum post prune settings to ACP > Forums > Edit forum.
  */
 class listener implements EventSubscriberInterface
 {
-	/** @var int Upper bound of the USINT column uflagmey_pp_days */
-	const DAYS_MAX = 65535;
+	/** @var int Upper bound of the USINT column uflagmey_pp_days (rules: prune\settings) */
+	const DAYS_MAX = settings::DAYS_MAX;
 
 	/** @var \phpbb\language\language */
 	protected $language;
@@ -174,34 +175,52 @@ class listener implements EventSubscriberInterface
 	{
 		$forum_data = $event['forum_data'];
 		$edit = ($event['action'] === 'edit' && !empty($forum_data['forum_id']));
+
+		$event['forum_data'] = array_merge($forum_data, $this->posted_settings($this->settings(), $edit ? (int) $forum_data['forum_id'] : 0));
+	}
+
+	/**
+	 * Settings from the POST, read the same way for saving the forum form and
+	 * for the preview with the values in the form: integer like the column
+	 * (empty field or text: 0, which the rules then reject). A setting missing
+	 * from the POST keeps the stored value of an existing forum ($forum_id),
+	 * a new forum ($forum_id 0) gets the default.
+	 *
+	 * @param array	$settings	key => default
+	 * @param int	$forum_id	Existing forum, 0 for a new one
+	 * @return array	key => int; an existing forum's key is left out if nothing is stored
+	 *					(unknown forum or outdated container: core does not touch the column)
+	 */
+	protected function posted_settings(array $settings, $forum_id)
+	{
+		$data = [];
 		$stored = null;
 
-		foreach ($this->settings() as $key => $default)
+		foreach ($settings as $key => $default)
 		{
 			if ($this->request->is_set_post($key))
 			{
-				$forum_data[$key] = $this->request->variable($key, $default);
+				$data[$key] = $this->request->variable($key, $default);
 			}
-			else if (!$edit)
+			else if (!$forum_id)
 			{
-				$forum_data[$key] = $default;
+				$data[$key] = $default;
 			}
 			else
 			{
 				if ($stored === null)
 				{
-					$stored = $this->stored_settings((int) $forum_data['forum_id']);
+					$stored = $this->stored_settings($forum_id);
 				}
 
-				// Unknown forum or outdated container: leave the key out, core does not touch the column.
 				if (isset($stored[$key]))
 				{
-					$forum_data[$key] = (int) $stored[$key];
+					$data[$key] = (int) $stored[$key];
 				}
 			}
 		}
 
-		$event['forum_data'] = $forum_data;
+		return $data;
 	}
 
 	/**
@@ -226,9 +245,11 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * A new forum starts with the defaults. A preview request (link in the
-	 * block, GET with link hash, never the forum form) is answered here: as
-	 * JSON for the AJAX link, otherwise the result is shown in the form.
+	 * A new forum starts with the defaults. A preview request (button in the
+	 * block with link hash, never the forum form: core only saves with "update"
+	 * in the POST) is answered here: with JavaScript a POST with the values in
+	 * the form, answered as JSON; without JavaScript the GET link, stored
+	 * settings, result shown in the form.
 	 *
 	 * @param \phpbb\event\data $event
 	 */
@@ -239,7 +260,8 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
-		if ($event['action'] === 'edit' && $this->request->is_set('uflagmey_pp_preview', \phpbb\request\request_interface::GET))
+		if ($event['action'] === 'edit' && ($this->request->is_set('uflagmey_pp_preview', \phpbb\request\request_interface::GET)
+			|| $this->request->is_set_post('uflagmey_pp_preview')))
 		{
 			$this->preview_request((int) $event['forum_id']);
 		}
@@ -259,48 +281,22 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
+		$event['errors'] = array_merge($event['errors'], $this->setting_errors(array_intersect_key($forum_data, $this->settings())));
+	}
+
+	/**
+	 * Translated errors of the settings (rules: prune\settings::errors()).
+	 *
+	 * @param array $settings
+	 * @return array
+	 */
+	protected function setting_errors(array $settings)
+	{
 		$this->language->add_lang('common', 'uflagmey/postprune');
-		$errors = $event['errors'];
 
-		if (!in_array((int) $forum_data['uflagmey_pp_mode'], [0, 1, 2], true))
-		{
-			$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_MODE');
-		}
-
-		if (array_key_exists('uflagmey_pp_scope', $forum_data) && !in_array((int) $forum_data['uflagmey_pp_scope'], [query_builder::SCOPE_FORUM, query_builder::SCOPE_MARKED], true))
-		{
-			$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_SCOPE');
-		}
-
-		$days = (int) $forum_data['uflagmey_pp_days'];
-		if ($days < 1 || $days > self::DAYS_MAX)
-		{
-			$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_DAYS', self::DAYS_MAX);
-		}
-
-		if (array_key_exists('uflagmey_pp_rule', $forum_data))
-		{
-			$rule = (int) $forum_data['uflagmey_pp_rule'];
-			if (!in_array($rule, [query_builder::RULE_AGE, query_builder::RULE_COUNT], true))
-			{
-				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_RULE');
-			}
-			else if ($rule === query_builder::RULE_COUNT && (int) ($forum_data['uflagmey_pp_scope'] ?? query_builder::SCOPE_FORUM) !== query_builder::SCOPE_MARKED)
-			{
-				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_RULE_SCOPE');
-			}
-		}
-
-		if (array_key_exists('uflagmey_pp_keep_count', $forum_data))
-		{
-			$x = (int) $forum_data['uflagmey_pp_keep_count'];
-			if ($x < query_builder::KEEP_COUNT_MIN || $x > query_builder::KEEP_COUNT_MAX)
-			{
-				$errors[] = $this->language->lang('UFLAGMEY_PP_ERR_KEEP_COUNT', query_builder::KEEP_COUNT_MIN, query_builder::KEEP_COUNT_MAX);
-			}
-		}
-
-		$event['errors'] = $errors;
+		return array_map(function ($error) {
+			return call_user_func_array([$this->language, 'lang'], $error);
+		}, settings::errors($settings));
 	}
 
 	/**
@@ -403,8 +399,11 @@ class listener implements EventSubscriberInterface
 	{
 		$this->language->add_lang('common', 'uflagmey/postprune');
 
+		// Values from the form only by POST; a GET carrying them is rejected.
+		$form = $this->request->is_set_post('uflagmey_pp_form');
 		$valid = $this->preview_available()
 			&& $this->auth->acl_get('a_forum')
+			&& !$this->request->is_set('uflagmey_pp_form', \phpbb\request\request_interface::GET)
 			&& check_link_hash($this->request->variable('hash', ''), $this->preview_hash_name($forum_id));
 
 		if ($this->request->is_ajax())
@@ -412,7 +411,7 @@ class listener implements EventSubscriberInterface
 			$json = new \phpbb\json_response();
 			$json->send($valid ? [
 				'success'				=> true,
-				'UFLAGMEY_PP_PREVIEW'	=> $this->preview_text($forum_id),
+				'UFLAGMEY_PP_PREVIEW'	=> $form ? $this->form_preview_text($forum_id) : $this->preview_text($forum_id),
 			] : [
 				'success'		=> false,
 				'MESSAGE_TITLE'	=> $this->language->lang('ERROR'),
@@ -425,7 +424,39 @@ class listener implements EventSubscriberInterface
 			trigger_error($this->language->lang('FORM_INVALID') . adm_back_link(append_sid($this->root_path . $this->adm_path . 'index.' . $this->php_ext, 'i=acp_forums&amp;mode=manage&amp;action=edit&amp;f=' . (int) $forum_id)), E_USER_WARNING);
 		}
 
-		$this->preview = $this->preview_text($forum_id);
+		$this->preview = $form ? $this->form_preview_text($forum_id) : $this->preview_text($forum_id);
+	}
+
+	/**
+	 * Preview with the values in the form (POST): the stored settings overlaid
+	 * with the posted ones (settings::PREVIEW_KEYS), checked by the same rules
+	 * as saving. Invalid values: the errors saving would show, no count.
+	 * Values that differ from the stored ones are marked "not saved yet".
+	 *
+	 * @param int $forum_id
+	 * @return string
+	 */
+	protected function form_preview_text($forum_id)
+	{
+		$keys = array_intersect_key($this->settings(), array_flip(settings::PREVIEW_KEYS));
+		$values = $this->posted_settings($keys, $forum_id);
+
+		$errors = $this->setting_errors($values);
+		if ($errors)
+		{
+			return '<span class="error" id="uflagmey_pp_preview_error">' . implode('<br>', $errors) . '</span>';
+		}
+
+		$stored = $this->stored_settings($forum_id);
+		$unsaved = false;
+		foreach ($values as $key => $value)
+		{
+			$unsaved = $unsaved || !isset($stored[$key]) || (int) $stored[$key] !== (int) $value;
+		}
+
+		$text = $this->preview_text($forum_id, $values);
+
+		return $unsaved ? $this->language->lang('UFLAGMEY_PP_PREVIEW_UNSAVED', $text) : $text;
 	}
 
 	/**
@@ -433,12 +464,13 @@ class listener implements EventSubscriberInterface
 	 * settings): "→ n posts would be deleted (oldest: <date>, newest to be deleted: <date>)",
 	 * dates in the board/user date format with time.
 	 *
-	 * @param int $forum_id
+	 * @param int		$forum_id
+	 * @param array	$form		Values from the form, already checked (see form_preview_text()); empty: stored settings
 	 * @return string
 	 */
-	protected function preview_text($forum_id)
+	protected function preview_text($forum_id, array $form = [])
 	{
-		$result = $this->pruner->preview($forum_id, time());
+		$result = $this->pruner->preview($forum_id, time(), $form);
 		if (!$result)
 		{
 			return $this->language->lang($result === null ? 'NO_FORUM' : 'UFLAGMEY_PP_PREVIEW_FAILED');

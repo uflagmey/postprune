@@ -205,16 +205,19 @@ class pruner
 
 	/**
 	 * ACP preview ("calculate dry run now"): what a dry run of this forum would
-	 * count right now, from the STORED settings, whatever the mode. Read only:
-	 * no deletion, no log entry, no last_run, no cron lock. Same counting as the
-	 * dry run of run() (count()), without batch limit.
+	 * count right now, from the stored settings, optionally overlaid with the
+	 * values in the ACP form, whatever the mode. Read only: no deletion, no log
+	 * entry, no last_run, no cron lock. Same counting as the dry run of run()
+	 * (count()), without batch limit.
 	 *
 	 * @param int	$forum_id
 	 * @param int	$now
-	 * @return array|null|false	['forum' => settings row, 'post_forum' => bool, 'topics' => int|null,
+	 * @param array	$form	Values from the form, checked by settings::errors(); only
+	 *						settings::PREVIEW_KEYS count, as integers
+	 * @return array|null|false	['forum' => settings row used, 'post_forum' => bool, 'topics' => int|null,
 	 *							'num' => int, 'oldest' => int, 'newest' => int]; null: no such forum; false: a query failed
 	 */
-	public function preview($forum_id, $now)
+	public function preview($forum_id, $now, array $form = [])
 	{
 		$rows = $this->select($this->query_builder->forum_query($forum_id, schema::topic_scope($this->config), schema::keep_count($this->config)));
 		if ($rows === false || !$rows)
@@ -223,6 +226,14 @@ class pruner
 		}
 
 		$forum = $rows[0];
+		foreach (array_intersect_key($form, array_flip(settings::PREVIEW_KEYS)) as $key => $value)
+		{
+			// Only columns this schema state has (beta4 rows carry no rule)
+			if (array_key_exists($key, $forum))
+			{
+				$forum[$key] = (int) $value;
+			}
+		}
 		$post_forum = ((int) $forum['forum_type'] === FORUM_POST);
 		$count = $post_forum ? $this->count($forum, $now) : ['topics' => $this->marked_topics($forum), 'num' => 0, 'oldest' => 0, 'newest' => 0];
 		if ($count === false || $count['topics'] === false)
