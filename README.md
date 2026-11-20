@@ -24,7 +24,7 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 - phpBB 3.3.17 und 3.3.19
 - Datenbanken: MySQL/MariaDB, PostgreSQL, SQLite. MS SQL Server und Oracle sind nicht getestet.
-- PHP 8.3, 8.4 und 8.5, jeweils mit phpBB 3.3.17 und 3.3.19: alle Tests grün, keine Meldungen der Extension im PHP-Fehlerlog. phpBB 3.3 selbst unterstützt offiziell PHP bis 8.3; unter 8.4/8.5 schreibt der phpBB-Kern Deprecation-Hinweise ins PHP-Fehlerlog (nicht die Extension).
+- PHP 8.3, 8.4 und 8.5, jeweils mit phpBB 3.3.17 und 3.3.19: getestet, keine Meldungen der Extension im PHP-Fehlerlog. phpBB 3.3 selbst unterstützt offiziell PHP bis 8.3; unter 8.4/8.5 schreibt der phpBB-Kern Deprecation-Hinweise ins PHP-Fehlerlog (nicht die Extension).
 - PHP 7.2 bis 8.2: nur statisch geprüft (PHPCompatibility), nicht in Laufzeit-Tests.
 
 ### Installation
@@ -176,7 +176,7 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 
 - phpBB 3.3.17 and 3.3.19
 - Databases: MySQL/MariaDB, PostgreSQL, SQLite. MS SQL Server and Oracle are not tested.
-- PHP 8.3, 8.4 and 8.5, each with phpBB 3.3.17 and 3.3.19: all tests green, no messages from the extension in the PHP error log. phpBB 3.3 itself officially supports PHP up to 8.3; on 8.4/8.5 the phpBB core writes deprecation notices to the PHP error log (not the extension).
+- PHP 8.3, 8.4 and 8.5, each with phpBB 3.3.17 and 3.3.19: tested, no messages from the extension in the PHP error log. phpBB 3.3 itself officially supports PHP up to 8.3; on 8.4/8.5 the phpBB core writes deprecation notices to the PHP error log (not the extension).
 - PHP 7.2 to 8.2: checked statically only (PHPCompatibility), not in runtime tests.
 
 ### Installation
