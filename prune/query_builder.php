@@ -27,6 +27,9 @@ class query_builder
 	const RULE_AGE = 0;
 	const RULE_COUNT = 1;
 
+	/** @var int Seconds per day (post age in days) */
+	const DAY = 86400;
+
 	/** @var int Range of the keep count X (USINT column uflagmey_pp_keep_count) */
 	const KEEP_COUNT_MIN = 1;
 	const KEEP_COUNT_MAX = 65535;
@@ -50,10 +53,10 @@ class query_builder
 	 * @param string	$posts_table
 	 * @param string	$topics_table
 	 * @param string	$forums_table
-	 * @param int		$forum_post		Value of FORUM_POST
-	 * @param int		$post_normal	Value of POST_NORMAL
+	 * @param int		$forum_post		Value of FORUM_POST (core constant)
+	 * @param int		$post_normal	Value of POST_NORMAL (core constant)
 	 */
-	public function __construct($posts_table, $topics_table, $forums_table, $forum_post = 1, $post_normal = 0)
+	public function __construct($posts_table, $topics_table, $forums_table, $forum_post = FORUM_POST, $post_normal = POST_NORMAL)
 	{
 		$this->posts_table = $posts_table;
 		$this->topics_table = $topics_table;
@@ -192,7 +195,7 @@ class query_builder
 	 */
 	public function cutoff($days, $now)
 	{
-		return (int) $now - max(1, (int) $days) * 86400;
+		return (int) $now - max(1, (int) $days) * self::DAY;
 	}
 
 	/**
@@ -277,7 +280,7 @@ class query_builder
 	 */
 	public function keep_count(array $forum)
 	{
-		$x = isset($forum['uflagmey_pp_keep_count']) ? (int) $forum['uflagmey_pp_keep_count'] : 100;
+		$x = isset($forum['uflagmey_pp_keep_count']) ? (int) $forum['uflagmey_pp_keep_count'] : settings::DEFAULTS['uflagmey_pp_keep_count'];
 
 		return max(self::KEEP_COUNT_MIN, min(self::KEEP_COUNT_MAX, $x));
 	}
@@ -353,6 +356,47 @@ class query_builder
 				AND t.topic_moved_id = 0' . ((int) $after > 0 ? '
 				AND t.topic_id > ' . (int) $after : ''),
 			'ORDER_BY'	=> 't.topic_id ASC',
+		];
+	}
+
+	/**
+	 * One topic with its forum (quick-mod mark). Implicit join through sql_build_query() (rc1, Validation Policy).
+	 *
+	 * @param int $topic_id
+	 * @return array
+	 */
+	public function topic_with_forum_query($topic_id)
+	{
+		return [
+			'SELECT'	=> 't.topic_id, t.forum_id, t.topic_title, t.topic_moved_id, t.uflagmey_pp_marked, f.forum_name, f.forum_type',
+			'FROM'		=> [$this->topics_table => 't', $this->forums_table => 'f'],
+			'WHERE'		=> 't.topic_id = ' . (int) $topic_id . '
+				AND f.forum_id = t.forum_id',
+		];
+	}
+
+	/**
+	 * Marked topics with the name of their forum (topics leaving their forum lose the mark).
+	 * LEFT JOIN through sql_build_query() (rc1, Validation Policy).
+	 *
+	 * The caller may add a topic_id list to WHERE with $db->sql_in_set().
+	 *
+	 * @param int	$in_forum		Only topics of this forum; 0: any
+	 * @param int	$not_forum		Only topics outside this forum; 0: any
+	 * @return array
+	 */
+	public function marked_with_forum_query($in_forum = 0, $not_forum = 0)
+	{
+		return [
+			'SELECT'	=> 't.topic_id, t.topic_title, f.forum_name',
+			'FROM'		=> [$this->topics_table => 't'],
+			'LEFT_JOIN'	=> [[
+				'FROM'	=> [$this->forums_table => 'f'],
+				'ON'	=> 'f.forum_id = t.forum_id',
+			]],
+			'WHERE'		=> 't.uflagmey_pp_marked = 1'
+				. ((int) $in_forum ? ' AND t.forum_id = ' . (int) $in_forum : '')
+				. ((int) $not_forum ? ' AND t.forum_id <> ' . (int) $not_forum : ''),
 		];
 	}
 

@@ -31,6 +31,12 @@ $lang = array_merge($lang, [
 	'LOG_UFLAGMEY_PP_TOPIC_MARKED'			=> '<strong>Post pruning: topic marked</strong><br>» “%1$s” in forum “%2$s”',
 	'LOG_UFLAGMEY_PP_TOPIC_UNMARKED'		=> '<strong>Post pruning: mark removed</strong><br>» “%1$s” in forum “%2$s”',
 	'LOG_UFLAGMEY_PP_TOPIC_UNMARKED_MOVED'	=> '<strong>Post pruning: mark removed on move</strong><br>» “%1$s” from forum “%2$s” to “%3$s”',
+	'LOG_UFLAGMEY_PP_TOPICS_UNMARKED_MOVED'	=> [
+		2	=> '<strong>Post pruning: marks removed on move</strong><br>» %1$d topics from forum “%2$s” to “%3$s”',
+	],
+	'LOG_UFLAGMEY_PP_TOPICS_UNMARKED_MOVED_MIXED'	=> [
+		2	=> '<strong>Post pruning: marks removed on move</strong><br>» %1$d topics from %2$d forums to “%3$s”',
+	],
 	'LOG_UFLAGMEY_PP_DRYRUN_TOPIC'	=> [
 		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topic in forum “%1$s” would be deleted',
 		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post in %3$d marked topic in forum “%1$s” would be deleted',

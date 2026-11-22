@@ -283,7 +283,7 @@ class topic_listener implements EventSubscriberInterface
 		{
 			$new = (int) $mark;
 			$sql = 'UPDATE ' . $this->topics_table . '
-				SET uflagmey_pp_marked = ' . $new . '
+				SET ' . $this->db->sql_build_array('UPDATE', ['uflagmey_pp_marked' => $new]) . '
 				WHERE topic_id = ' . (int) $topic_id . '
 					AND uflagmey_pp_marked = ' . (1 - $new);
 			$this->db->sql_query($sql);
@@ -350,13 +350,9 @@ class topic_listener implements EventSubscriberInterface
 			return;
 		}
 
-		$sql = 'SELECT t.topic_id, t.topic_title, f.forum_name
-			FROM ' . $this->topics_table . ' t
-			LEFT JOIN ' . $this->forums_table . ' f ON (f.forum_id = t.forum_id)
-			WHERE ' . $this->db->sql_in_set('t.topic_id', array_map('intval', $event['topic_ids'])) . '
-				AND t.forum_id <> ' . (int) $event['forum_id'] . '
-				AND t.uflagmey_pp_marked = 1';
-		$this->unmark($this->fetch($sql), $this->forum_name((int) $event['forum_id']));
+		$query = $this->query_builder->marked_with_forum_query(0, (int) $event['forum_id']);
+		$query['WHERE'] .= ' AND ' . $this->db->sql_in_set('t.topic_id', array_map('intval', $event['topic_ids']));
+		$this->unmark($this->fetch($this->db->sql_build_query('SELECT', $query)), $this->forum_name((int) $event['forum_id']));
 	}
 
 	/**
@@ -373,12 +369,7 @@ class topic_listener implements EventSubscriberInterface
 			return;
 		}
 
-		$sql = 'SELECT t.topic_id, t.topic_title, f.forum_name
-			FROM ' . $this->topics_table . ' t
-			LEFT JOIN ' . $this->forums_table . ' f ON (f.forum_id = t.forum_id)
-			WHERE t.forum_id = ' . (int) $event['from_id'] . '
-				AND t.uflagmey_pp_marked = 1';
-		$this->moving = $this->fetch($sql);
+		$this->moving = $this->fetch($this->db->sql_build_query('SELECT', $this->query_builder->marked_with_forum_query((int) $event['from_id'])));
 	}
 
 	/**
@@ -419,11 +410,7 @@ class topic_listener implements EventSubscriberInterface
 	 */
 	protected function get_topic($topic_id)
 	{
-		$sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_moved_id, t.uflagmey_pp_marked, f.forum_name, f.forum_type
-			FROM ' . $this->topics_table . ' t, ' . $this->forums_table . ' f
-			WHERE t.topic_id = ' . (int) $topic_id . '
-				AND f.forum_id = t.forum_id';
-		$result = $this->db->sql_query($sql);
+		$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $this->query_builder->topic_with_forum_query($topic_id)));
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
 
@@ -471,19 +458,29 @@ class topic_listener implements EventSubscriberInterface
 		}
 
 		$sql = 'UPDATE ' . $this->topics_table . '
-			SET uflagmey_pp_marked = 0
+			SET ' . $this->db->sql_build_array('UPDATE', ['uflagmey_pp_marked' => 0]) . '
 			WHERE ' . $this->db->sql_in_set('topic_id', array_map('intval', array_column($topics, 'topic_id')));
 		$this->db->sql_query($sql);
 
+		// One log entry: the topic itself when it is one, else a summary (rc1: a forum with
+		// thousands of marked topics moved by "move content" wrote thousands of entries).
 		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
-		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
-		foreach ($topics as $topic)
+		$ip = !empty($this->user->ip) ? $this->user->ip : '';
+		if (count($topics) === 1)
 		{
 			$this->log->add('admin', $user_id, $ip, 'LOG_UFLAGMEY_PP_TOPIC_UNMARKED_MOVED', false, [
-				$topic['topic_title'],
-				(string) $topic['forum_name'],
+				$topics[0]['topic_title'],
+				(string) $topics[0]['forum_name'],
 				$to_name,
 			]);
+			return;
 		}
+
+		$from = array_unique(array_map('strval', array_column($topics, 'forum_name')));
+		$this->log->add('admin', $user_id, $ip, (count($from) === 1) ? 'LOG_UFLAGMEY_PP_TOPICS_UNMARKED_MOVED' : 'LOG_UFLAGMEY_PP_TOPICS_UNMARKED_MOVED_MIXED', false, [
+			count($topics),
+			(count($from) === 1) ? reset($from) : count($from),
+			$to_name,
+		]);
 	}
 }

@@ -17,6 +17,22 @@ namespace uflagmey\postprune\prune;
  */
 class settings
 {
+	/**
+	 * @var array Default per-forum settings, the one place for the code (rc1). The published migrations m1/m3 keep
+	 *			their literal values (published migrations are never changed); tests/prune/defaults_test.php checks
+	 *			that they match.
+	 */
+	const DEFAULTS = [
+		'uflagmey_pp_mode'			=> query_builder::MODE_OFF,
+		'uflagmey_pp_days'			=> 30,
+		'uflagmey_pp_keep_first'	=> 1,
+		'uflagmey_pp_skip_sticky'	=> 1,
+		'uflagmey_pp_count_sync'	=> 0,
+		'uflagmey_pp_scope'			=> query_builder::SCOPE_FORUM,
+		'uflagmey_pp_rule'			=> query_builder::RULE_AGE,
+		'uflagmey_pp_keep_count'	=> 100,
+	];
+
 	/** @var int Range of the post age in days (USINT column uflagmey_pp_days) */
 	const DAYS_MIN = 1;
 	const DAYS_MAX = 65535;

@@ -133,19 +133,13 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Default values of the per-forum settings (must match the migration).
+	 * Default values of the beta2 per-forum settings (settings::DEFAULTS).
 	 *
 	 * @return array
 	 */
 	public static function defaults()
 	{
-		return [
-			'uflagmey_pp_mode'			=> 0,
-			'uflagmey_pp_days'			=> 30,
-			'uflagmey_pp_keep_first'	=> 1,
-			'uflagmey_pp_skip_sticky'	=> 1,
-			'uflagmey_pp_count_sync'	=> 0,
-		];
+		return array_intersect_key(settings::DEFAULTS, array_flip(['uflagmey_pp_mode', 'uflagmey_pp_days', 'uflagmey_pp_keep_first', 'uflagmey_pp_skip_sticky', 'uflagmey_pp_count_sync']));
 	}
 
 	/**
@@ -157,8 +151,8 @@ class listener implements EventSubscriberInterface
 	protected function settings()
 	{
 		return self::defaults()
-			+ ($this->topic_scope() ? ['uflagmey_pp_scope' => query_builder::SCOPE_FORUM] : [])
-			+ ($this->keep_count() ? ['uflagmey_pp_rule' => query_builder::RULE_AGE, 'uflagmey_pp_keep_count' => 100] : []);
+			+ ($this->topic_scope() ? array_intersect_key(settings::DEFAULTS, array_flip(['uflagmey_pp_scope'])) : [])
+			+ ($this->keep_count() ? array_intersect_key(settings::DEFAULTS, array_flip(['uflagmey_pp_rule', 'uflagmey_pp_keep_count'])) : []);
 	}
 
 	/**
