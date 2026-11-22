@@ -36,7 +36,7 @@ class pruner
 	/** @var \phpbb\log\log_interface */
 	protected $log;
 
-	/** @var \phpbb\user */
+	/** @var \phpbb\user Kept for the service signature; the log entries are written as the system (add_log()) */
 	protected $user;
 
 	/** @var query_builder */
@@ -629,9 +629,7 @@ class pruner
 	 */
 	protected function schema_mismatch(array $pruned, array $dryrun)
 	{
-		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
-		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
-		$this->log->add('critical', $user_id, $ip, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', false, []);
+		$this->add_log('LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', [], 'critical');
 
 		return [
 			'backlog'	=> false,
@@ -679,6 +677,10 @@ class pruner
 	 * Log data: forum name first, then the post count (phpBB picks the plural
 	 * form by the first integer), then the number of marked topics if any,
 	 * then the keep count X for rule "count".
+	 * Written as the system (rc1): user ANONYMOUS and an empty IP (log_ip is
+	 * VARCHAR(40) NOT NULL DEFAULT '', the core itself stores '' for no IP),
+	 * whoever's page request ran the cron. Until beta5 the visitor's user and
+	 * IP appeared in the admin log as if they had deleted the posts.
 	 *
 	 * @param string	$operation
 	 * @param array		$data
@@ -686,9 +688,6 @@ class pruner
 	 */
 	protected function add_log($operation, array $data, $mode = 'admin')
 	{
-		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
-		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
-
-		$this->log->add($mode, $user_id, $ip, $operation, false, $data);
+		$this->log->add($mode, ANONYMOUS, '', $operation, false, $data);
 	}
 }

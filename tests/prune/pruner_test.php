@@ -166,7 +166,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertSame([0, 0, 1], $dry_per_run);
 		$last = end($this->logs);
-		$this->assertSame(['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN', ['F1', 5]], $last);
+		$this->assertSame(['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN', ['F1', 5]], $last);
 	}
 
 	public function test_dry_run_logs_zero_candidates()
@@ -177,7 +177,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertFalse($result['backlog']);
 		$this->assertSame([1 => 0], $result['dryrun']);
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN', ['A', 0]]], $this->logs, 'entry even with 0 candidates');
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN', ['A', 0]]], $this->logs, 'entry even with 0 candidates');
 		$this->assertSame([], fixtures::$delete_calls);
 	}
 
@@ -209,7 +209,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->seed([2 => 2]);
 		$this->pruner()->run(fixtures::NOW, 100);
 
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED', ['F2', 3]]], $this->logs);
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED', ['F2', 3]]], $this->logs);
 	}
 
 	public function test_num_posts_reduced_by_approved_posts_only_without_count_sync()
@@ -240,6 +240,26 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
 		$this->assertSame([], fixtures::$delete_calls);
 		$this->assertSame([], $this->logs);
+	}
+
+	/**
+	 * rc1 (R-08 / SR-09): the cron writes as the system, never as the visitor whose page request ran it.
+	 */
+	public function test_log_entries_are_written_as_the_system()
+	{
+		$this->seed([1 => 2]);
+		$log = $this->createMock(\phpbb\log\log_interface::class);
+		$calls = [];
+		$log->method('add')->willReturnCallback(function ($mode, $user_id, $ip) use (&$calls) {
+			$calls[] = [$mode, $user_id, $ip];
+			return 1;
+		});
+		$user = $this->createMock(\phpbb\user::class);
+		$user->data = ['user_id' => 84, 'username' => 'alice'];
+		$user->ip = '172.26.0.1';
+		(new pruner($this->db, $this->config, $log, $user, fixtures::query_builder(), './', 'php'))->run(fixtures::NOW, 100);
+
+		$this->assertSame([['admin', ANONYMOUS, '']], $calls);
 	}
 
 	public function test_has_forums_counts_post_forums_with_mode_only()
@@ -274,7 +294,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$result = $this->pruner(2)->run(fixtures::NOW, 6);
 
 		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
-		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
+		$this->assertSame([['critical', ANONYMOUS, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
 		$this->assertSame([], fixtures::$delete_calls);
 		$this->assertSame($posts, $this->db->sql_fetchfield('n', false, $this->db->sql_query('SELECT COUNT(*) AS n FROM phpbb_posts')));
 	}
@@ -287,7 +307,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$result = $this->pruner(2)->run(fixtures::NOW, 6);
 
 		$this->assertSame(['backlog' => false, 'pruned' => [], 'dryrun' => []], $result);
-		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
+		$this->assertSame([['critical', ANONYMOUS, 'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', []]], $this->logs);
 		$this->assertSame([], fixtures::$delete_calls);
 	}
 
@@ -313,14 +333,14 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertSame([101, 111, 102], fixtures::$delete_calls[0][1], 'marked sticky included, start posts kept, unmarked 12 untouched');
 		$this->assertSame([1 => 3], $result['pruned']);
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 3, 2]]], $this->logs);
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 3, 2]]], $this->logs);
 	}
 
 	public function test_scope_marked_single_topic_log_key()
 	{
 		$this->seed_scoped([], [10]);
 		$this->pruner(2)->run(fixtures::NOW, 100);
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPIC', ['S', 2, 1]]], $this->logs);
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED_TOPIC', ['S', 2, 1]]], $this->logs);
 	}
 
 	public function test_scope_marked_without_schema_marker_is_skipped_not_whole_forum()
@@ -330,7 +350,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->pruner(0, true)->run(fixtures::NOW, 100);
 
 		$this->assertSame([], fixtures::$delete_calls, 'neither the marked nor the unmarked topics');
-		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SKIPPED', ['S']]], $this->logs);
+		$this->assertSame([['critical', ANONYMOUS, 'LOG_UFLAGMEY_PP_SKIPPED', ['S']]], $this->logs);
 	}
 
 	public function test_scope_forum_without_schema_marker_behaves_like_beta2()
@@ -339,7 +359,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->pruner(0, true)->run(fixtures::NOW, 100);
 
 		$this->assertSame([101, 121, 102, 122], fixtures::$delete_calls[0][1], 'whole forum minus sticky, marks ignored');
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED', ['S', 4]]], $this->logs);
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED', ['S', 4]]], $this->logs);
 	}
 
 	public function test_active_without_marked_topics_logs_once_per_cycle()
@@ -367,7 +387,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertSame([0, 1], $no_topics, 'only in the cycle-closing run');
 		$this->assertNotContains(120, array_merge(...array_column(fixtures::$delete_calls, 1)), 'unmarked topic untouched');
-		$this->assertContains(['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS', ['S']], $this->logs);
+		$this->assertContains(['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS', ['S']], $this->logs);
 	}
 
 	public function test_dry_run_scope_marked_texts()
@@ -383,9 +403,9 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([], fixtures::$delete_calls);
 		$this->assertSame([1 => 3, 2 => 0, 3 => 0], $result['dryrun']);
 		$this->assertSame([
-			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 3, 2]],
-			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', ['N']],
-			['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['Z', 0, 2]],
+			['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 3, 2]],
+			['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN_NO_TOPICS', ['N']],
+			['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['Z', 0, 2]],
 		], $this->logs);
 	}
 
@@ -405,12 +425,12 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		fixtures::topic($this->db, 1, 13, [130 => 5, 131 => 2], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
 		$this->pruner(2)->run(fixtures::NOW, 100);
 		$this->assertSame([101, 102], fixtures::$delete_calls[0][1]);
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 2, 2]]], $this->logs, '2 posts in 2 marked topics');
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['S', 2, 2]]], $this->logs, '2 posts in 2 marked topics');
 
 		$this->logs = [];
 		$this->db->sql_query('UPDATE phpbb_forums SET uflagmey_pp_mode = 1 WHERE forum_id = 1');
 		$this->db->sql_query('UPDATE phpbb_topics SET uflagmey_pp_marked = 1 WHERE topic_id = 12');
 		$this->pruner(2)->run(fixtures::NOW, 100);
-		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 2, 3]]], $this->logs, 'dry run: 2 posts (topic 12) in 3 marked topics');
+		$this->assertSame([['admin', ANONYMOUS, 'LOG_UFLAGMEY_PP_DRYRUN_TOPICS', ['S', 2, 3]]], $this->logs, 'dry run: 2 posts (topic 12) in 3 marked topics');
 	}
 }
