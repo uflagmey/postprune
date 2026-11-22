@@ -17,6 +17,16 @@ namespace uflagmey\postprune\prune;
  */
 class pruner
 {
+	/** @var string Config value (dynamic, m4_cursor): last topic the active run finished under rule "count"; 0: start of a cycle */
+	const CURSOR = 'uflagmey_pp_cursor';
+
+	/**
+	 * @var int Rule "count", dry run and preview: topics per count query (rc1: no statement with thousands of OR
+	 *			terms). Small on purpose: on MariaDB with outdated index statistics (e.g. after a bulk import) larger
+	 *			lists made the optimizer read the whole forum (2,000 topics: 100 per query 6 s, 10-50 per query < 1 s).
+	 */
+	const COUNT_CHUNK = 25;
+
 	/** @var \phpbb\db\driver\driver_interface */
 	protected $db;
 
@@ -138,6 +148,12 @@ class pruner
 	 * cycle saying so (dry run and active). Forums whose stored settings are
 	 * not understood (settings::doubt()) are skipped, with one critical log
 	 * entry per cycle, also written in the run that closes the cycle.
+	 * Rule "count" works topic by topic (rc1, topic_rows()): the run stops when
+	 * the batch is full and remembers the last finished topic (config CURSOR);
+	 * the next run continues behind it, and count forums before the cursor's
+	 * forum are skipped (finished earlier in this cycle). The cycle ends when a
+	 * run leaves no backlog; the cursor is then 0 and the next cycle starts at
+	 * the first topic again. Dry run and preview never touch the cursor.
 	 *
 	 * @param int	$now
 	 * @param int	$batch	Maximum number of posts to delete in this run
@@ -154,6 +170,21 @@ class pruner
 		{
 			return $this->schema_mismatch($pruned, $dryrun);
 		}
+
+		$cursor = isset($this->config[self::CURSOR]) ? (int) $this->config[self::CURSOR] : 0;
+		$cursor_forum = 0;
+		if ($cursor > 0)
+		{
+			$at = $this->select($this->query_builder->topic_forum_query($cursor));
+			if ($at === false)
+			{
+				return $this->schema_mismatch($pruned, $dryrun);
+			}
+			// Topic gone or moved away meanwhile: start the cycle over
+			$cursor_forum = $at ? (int) $at[0]['forum_id'] : 0;
+			$cursor = $cursor_forum ? $cursor : 0;
+		}
+		$last_done = $cursor;
 
 		$forums = [];
 		foreach ($rows as $forum)
@@ -184,23 +215,42 @@ class pruner
 				continue;
 			}
 
-			$bounds = $this->bounds($forum);
-			if ($bounds === false)
+			if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
 			{
-				return $this->schema_mismatch($pruned, $dryrun);
-			}
+				$forum_id = (int) $forum['forum_id'];
+				if ($cursor_forum && $forum_id < $cursor_forum)
+				{
+					// Finished earlier in this cycle (forums run in forum_id order)
+					continue;
+				}
+				if ($remaining <= 0)
+				{
+					$backlog = true;
+					continue;
+				}
 
-			// One row more than the budget tells whether a backlog remains.
-			$rows = ($bounds === null || $bounds) ? $this->select($this->query_builder->candidates_query($forum, $now, (array) $bounds), $remaining + 1) : [];
-			if ($rows === false)
-			{
-				return $this->schema_mismatch($pruned, $dryrun);
+				$result = $this->topic_rows($forum, $now, $remaining, ($forum_id === $cursor_forum) ? $cursor : 0, $last_done);
+				if ($result === false)
+				{
+					return $this->schema_mismatch($pruned, $dryrun);
+				}
+				list($rows, $full) = $result;
+				$backlog = $backlog || $full;
 			}
-
-			if (count($rows) > $remaining)
+			else
 			{
-				$backlog = true;
-				$rows = array_slice($rows, 0, $remaining);
+				// One row more than the budget tells whether a backlog remains.
+				$rows = $this->select($this->query_builder->candidates_query($forum, $now), $remaining + 1);
+				if ($rows === false)
+				{
+					return $this->schema_mismatch($pruned, $dryrun);
+				}
+
+				if (count($rows) > $remaining)
+				{
+					$backlog = true;
+					$rows = array_slice($rows, 0, $remaining);
+				}
 			}
 
 			if (!count($rows))
@@ -219,6 +269,13 @@ class pruner
 			{
 				$this->log_result('LOG_UFLAGMEY_PP_PRUNED', $forum, $deleted, $topics, min($softdeleted, $deleted));
 			}
+		}
+
+		// Cursor: where the next run continues (backlog), 0 when the cycle is complete
+		$next = $backlog ? $last_done : 0;
+		if ($next !== (isset($this->config[self::CURSOR]) ? (int) $this->config[self::CURSOR] : 0))
+		{
+			$this->config->set(self::CURSOR, $next, false);
 		}
 
 		if (!$backlog)
@@ -346,21 +403,87 @@ class pruner
 			return $count;
 		}
 
-		$rows = $this->select($this->query_builder->count_query($forum, $now, (array) $bounds));
-		if ($rows === false)
+		// Rule "age": one query; rule "count": COUNT_CHUNK topics per query (rc1: no statement with
+		// thousands of OR terms). The loop runs once per chunk of the forum's marked topics.
+		foreach (($bounds === null) ? [null] : array_chunk($bounds, self::COUNT_CHUNK, true) as $chunk)
+		{
+			$rows = $this->select($this->query_builder->count_query($forum, $now, (array) $chunk));
+			if ($rows === false)
+			{
+				return false;
+			}
+
+			$num = (int) $rows[0]['num_posts'];
+			if (!$num)
+			{
+				continue;
+			}
+			$count['oldest'] = $count['num'] ? min($count['oldest'], (int) $rows[0]['oldest']) : (int) $rows[0]['oldest'];
+			$count['newest'] = $count['num'] ? max($count['newest'], (int) $rows[0]['newest']) : (int) $rows[0]['newest'];
+			$count['num'] += $num;
+			$count['softdeleted'] += (int) $rows[0]['num_softdeleted'];
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Rule "count", active run (rc1): topic by topic in topic_id order, behind $after, one boundary
+	 * query and one small candidate query per topic (no OR list), until $remaining posts are collected.
+	 * SQL in a loop (Validation Policy exception, rc1): the loop ends as soon as the batch is full;
+	 * it visits each marked topic of the forum at most once per run, two queries each.
+	 *
+	 * @param array	$forum
+	 * @param int	$now
+	 * @param int	$remaining	Batch left in this run
+	 * @param int	$after		Cursor: continue behind this topic_id; 0: from the first topic
+	 * @param int	$last_done	Set to each topic whose candidates all fitted into the batch
+	 * @return array|false	[rows (post_id, post_visibility), bool batch full]; false: a query failed
+	 */
+	protected function topic_rows(array $forum, $now, $remaining, $after, &$last_done)
+	{
+		$topics = $this->select($this->query_builder->count_topics_query($forum, $after));
+		if ($topics === false)
 		{
 			return false;
 		}
 
-		$count['num'] = (int) $rows[0]['num_posts'];
-		if ($count['num'])
+		$x = $this->query_builder->keep_count($forum);
+		$rows = [];
+		foreach ($topics as $topic)
 		{
-			$count['softdeleted'] = (int) $rows[0]['num_softdeleted'];
-			$count['oldest'] = (int) $rows[0]['oldest'];
-			$count['newest'] = (int) $rows[0]['newest'];
+			$topic_id = (int) $topic['topic_id'];
+			$bound_rows = $this->select($this->query_builder->boundary_query($forum, $topic), $x);
+			if ($bound_rows === false)
+			{
+				return false;
+			}
+
+			$bound = $this->query_builder->boundary($bound_rows, $x);
+			if ($bound !== null)
+			{
+				$left = $remaining - count($rows);
+				// One row more than what is left tells whether the topic is finished.
+				$candidates = $this->select($this->query_builder->candidates_query($forum, $now, [$topic_id => $bound]), $left + 1);
+				if ($candidates === false)
+				{
+					return false;
+				}
+				if (count($candidates) > $left)
+				{
+					return [array_merge($rows, array_slice($candidates, 0, $left)), true];
+				}
+				$rows = array_merge($rows, $candidates);
+			}
+
+			$last_done = $topic_id;
+			if (count($rows) >= $remaining)
+			{
+				return [$rows, true];
+			}
 		}
 
-		return $count;
+		return [$rows, false];
 	}
 
 	/**

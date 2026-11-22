@@ -329,20 +329,37 @@ class query_builder
 	}
 
 	/**
-	 * Rule "count", step 1: the topics the rule applies to.
+	 * Rule "count", step 1: the topics the rule applies to, in topic_id order.
 	 * Same topics as marked_count_query() (topic_where() plus no shadow topics).
 	 *
-	 * @param array $forum	Row from forums_query()
+	 * @param array	$forum	Row from forums_query()
+	 * @param int	$after	Only topics with a higher topic_id (cron cursor, rc1); 0: all
 	 * @return array
 	 */
-	public function count_topics_query(array $forum)
+	public function count_topics_query(array $forum, $after = 0)
 	{
 		return [
 			'SELECT'	=> 't.topic_id',
 			'FROM'		=> [$this->topics_table => 't'],
 			'WHERE'		=> $this->topic_where($forum) . '
-				AND t.topic_moved_id = 0',
+				AND t.topic_moved_id = 0' . ((int) $after > 0 ? '
+				AND t.topic_id > ' . (int) $after : ''),
 			'ORDER_BY'	=> 't.topic_id ASC',
+		];
+	}
+
+	/**
+	 * Forum of one topic (cron cursor: in which forum the last run stopped).
+	 *
+	 * @param int $topic_id
+	 * @return array
+	 */
+	public function topic_forum_query($topic_id)
+	{
+		return [
+			'SELECT'	=> 't.forum_id',
+			'FROM'		=> [$this->topics_table => 't'],
+			'WHERE'		=> 't.topic_id = ' . (int) $topic_id,
 		];
 	}
 
