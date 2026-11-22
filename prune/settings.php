@@ -21,6 +21,9 @@ class settings
 	const DAYS_MIN = 1;
 	const DAYS_MAX = 65535;
 
+	/** @var int A posted value that is no plain number; every rule in errors() rejects it (rc1) */
+	const INVALID = -1;
+
 	/** @var array Settings the ACP preview takes from the form; mode and count_sync do not change the count */
 	const PREVIEW_KEYS = [
 		'uflagmey_pp_scope',
@@ -37,6 +40,20 @@ class settings
 		'uflagmey_pp_skip_sticky'	=> 'UFLAGMEY_PP_ERR_SKIP_STICKY',
 		'uflagmey_pp_count_sync'	=> 'UFLAGMEY_PP_ERR_COUNT_SYNC',
 	];
+
+	/**
+	 * A posted setting as an integer, strictly (rc1): only a plain sequence of digits (at most 9) is a
+	 * number. Anything else (an array, which the request class hands over as the empty default, "7.9",
+	 * "12abc", "-5", an empty field) becomes INVALID, so saving and the preview show an error instead of
+	 * silently storing a cast value.
+	 *
+	 * @param mixed $value	request::variable($key, '')
+	 * @return int
+	 */
+	public static function posted_int($value)
+	{
+		return (is_string($value) && preg_match('/^[0-9]{1,9}$/', $value)) ? (int) $value : self::INVALID;
+	}
 
 	/**
 	 * Errors of a set of settings. Only the keys present are checked, so the

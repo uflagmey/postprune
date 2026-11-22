@@ -52,7 +52,8 @@ class listener_test extends \PHPUnit\Framework\TestCase
 			return array_key_exists($name, $post);
 		});
 		$request->method('variable')->willReturnCallback(function ($name, $default) use ($post) {
-			if (!array_key_exists($name, $post))
+			// like phpBB's type_cast_helper: an array where a scalar is expected gives the default
+			if (!array_key_exists($name, $post) || (is_array($post[$name]) && !is_array($default)))
 			{
 				return $default;
 			}
@@ -103,6 +104,41 @@ class listener_test extends \PHPUnit\Framework\TestCase
 			'uflagmey_pp_keep_first' => 1, 'uflagmey_pp_skip_sticky' => 1, 'uflagmey_pp_count_sync' => 0,
 		], $this->settings($data));
 		$this->assertSame('A', $data['forum_name']);
+	}
+
+	/**
+	 * rc1 (R-06 / SR-07): no silent cast. Each malformed value gives the error saving shows; core then saves nothing.
+	 */
+	public function test_malformed_posted_values_give_errors_not_cast_values()
+	{
+		$valid = ['uflagmey_pp_mode' => '2', 'uflagmey_pp_scope' => '1', 'uflagmey_pp_rule' => '1', 'uflagmey_pp_keep_count' => '50',
+			'uflagmey_pp_days' => '90', 'uflagmey_pp_keep_first' => '1', 'uflagmey_pp_skip_sticky' => '1', 'uflagmey_pp_count_sync' => '0'];
+		$cases = [
+			['uflagmey_pp_rule', ['1'], 'UFLAGMEY_PP_ERR_RULE'],
+			['uflagmey_pp_mode', ['2'], 'UFLAGMEY_PP_ERR_MODE'],
+			['uflagmey_pp_scope', ['1'], 'UFLAGMEY_PP_ERR_SCOPE', 'UFLAGMEY_PP_ERR_RULE_SCOPE'],
+			['uflagmey_pp_keep_first', ['1'], 'UFLAGMEY_PP_ERR_KEEP_FIRST'],
+			['uflagmey_pp_keep_count', '7.9', 'UFLAGMEY_PP_ERR_KEEP_COUNT|1|65535'],
+			['uflagmey_pp_keep_count', '12abc', 'UFLAGMEY_PP_ERR_KEEP_COUNT|1|65535'],
+			['uflagmey_pp_days', '', 'UFLAGMEY_PP_ERR_DAYS|65535'],
+			['uflagmey_pp_days', '-5', 'UFLAGMEY_PP_ERR_DAYS|65535'],
+			['uflagmey_pp_days', '99999999999999999999', 'UFLAGMEY_PP_ERR_DAYS|65535'],
+			['uflagmey_pp_count_sync', '1e0', 'UFLAGMEY_PP_ERR_COUNT_SYNC'],
+		];
+		foreach ($cases as $case)
+		{
+			list($key, $value) = $case;
+			$listener = $this->listener([$key => $value] + $valid, true, 3);
+			$data = $this->request_data($listener, 'edit', ['forum_id' => 3]);
+			$event = new \phpbb\event\data(['forum_data' => $data, 'errors' => []]);
+			$listener->validate_data($event);
+			$this->assertSame(array_slice($case, 2), $event['errors'], $key . ' = ' . json_encode($value));
+		}
+
+		$listener = $this->listener($valid, true, 3);
+		$event = new \phpbb\event\data(['forum_data' => $this->request_data($listener, 'edit', ['forum_id' => 3]), 'errors' => []]);
+		$listener->validate_data($event);
+		$this->assertSame([], $event['errors'], 'plain numbers, also with leading zeros, are fine');
 	}
 
 	public function test_edit_without_our_fields_keeps_the_stored_values()

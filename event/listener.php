@@ -181,8 +181,9 @@ class listener implements EventSubscriberInterface
 
 	/**
 	 * Settings from the POST, read the same way for saving the forum form and
-	 * for the preview with the values in the form: integer like the column
-	 * (empty field or text: 0, which the rules then reject). A setting missing
+	 * for the preview with the values in the form: strictly as a plain number
+	 * (settings::posted_int(); an array, "7.9", "12abc" or an empty field gives
+	 * settings::INVALID, which the rules then reject). A setting missing
 	 * from the POST keeps the stored value of an existing forum ($forum_id),
 	 * a new forum ($forum_id 0) gets the default.
 	 *
@@ -200,7 +201,7 @@ class listener implements EventSubscriberInterface
 		{
 			if ($this->request->is_set_post($key))
 			{
-				$data[$key] = $this->request->variable($key, $default);
+				$data[$key] = settings::posted_int($this->request->variable($key, ''));
 			}
 			else if (!$forum_id)
 			{
