@@ -73,7 +73,7 @@ class preview_test extends \PHPUnit\Framework\TestCase
 
 	public function test_rule_count_in_mode_off_equals_the_following_dry_run_and_changes_nothing()
 	{
-		fixtures::forum($this->db, 1, 'K', FORUM_POST, ['uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_keep_count' => 10]);
+		fixtures::forum($this->db, 1, 'K', FORUM_POST, ['uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_keep_count' => 10, 'uflagmey_pp_days' => 1]);
 		$this->topic(1, 10, 40);
 		$this->topic(1, 11, 12);
 		$this->topic(1, 12, 5);

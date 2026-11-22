@@ -30,8 +30,12 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 	/** @var array format_date() arguments after the time */
 	protected $date_calls = [];
 
+	/** @var int Time the posts are aged from: the preview counts with time() (minimum age of rule "count", rc1) */
+	protected $now;
+
 	/**
-	 * Forum 3: off, marked topics only, keep the newest 2; topic 10 (marked) with 5 posts.
+	 * Forum 3: off, marked topics only, keep the newest 2, post age 1 day; topic 10 (marked) with 5 posts
+	 * of 5..1 days before now.
 	 *
 	 * @param array	$get		GET values
 	 * @param bool	$a_forum
@@ -42,8 +46,10 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 	protected function listener(array $get, $a_forum = true, $schema = 3, array $post = [])
 	{
 		$this->db = fixtures::db();
-		fixtures::forum($this->db, 3, 'A', FORUM_POST, ['uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_keep_count' => 2]);
+		fixtures::forum($this->db, 3, 'A', FORUM_POST, ['uflagmey_pp_mode' => 0, 'uflagmey_pp_scope' => 1, 'uflagmey_pp_rule' => 1, 'uflagmey_pp_keep_count' => 2, 'uflagmey_pp_days' => 1]);
 		fixtures::topic($this->db, 3, 10, [101 => 5, 102 => 4, 103 => 3, 104 => 2, 105 => 1], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
+		$this->now = time();
+		$this->db->sql_query('UPDATE phpbb_posts SET post_time = post_time + ' . ($this->now - fixtures::NOW));
 		$config = new \phpbb\config\config(['uflagmey_pp_schema' => $schema]);
 
 		$request = $this->createMock(\phpbb\request\request_interface::class);
@@ -144,9 +150,9 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$data = $this->edit_form($this->listener(['uflagmey_pp_preview' => 1, 'hash' => generate_link_hash('uflagmey_pp_preview.3'), 'uflagmey_pp_keep_count' => 1]));
 
 		$day = function ($days) {
-			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
+			return gmdate('Y-m-d', $this->now - $days * fixtures::DAY);
 		};
-		$this->assertSame('UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3) . '|0', $data['UFLAGMEY_PP_PREVIEW_RESULT'],
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_RESULT|2|2|' . $day(4) . '|' . $day(3) . '|0<br>UFLAGMEY_PP_PREVIEW_RULE|UFLAGMEY_PP_SAVED_KEEP_COUNT|2, UFLAGMEY_PP_SAVED_KEEP_AGE|1', $data['UFLAGMEY_PP_PREVIEW_RESULT'],
 			'posts 102 and 103 (keep the newest 2 besides the start post); the GET value keep_count=1 does not count');
 		$this->assertSame([[false, true], [false, true]], $this->date_calls, 'board/user date format with time, never "Today"');
 		$this->assertSame([], $this->logs, 'no log entry');
@@ -203,7 +209,7 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$event = new \phpbb\event\data(['action' => 'edit', 'forum_id' => 3, 'forum_data' => $posted, 'template_data' => []]);
 		$listener->display_form($event);
 
-		$this->assertSame('UFLAGMEY_PP_MODE_OFF · UFLAGMEY_PP_SAVED_MARKED|1 · UFLAGMEY_PP_SAVED_KEEP_COUNT|2 · UFLAGMEY_PP_SAVED_KEEP_FIRST', $event['template_data']['UFLAGMEY_PP_SAVED']);
+		$this->assertSame('UFLAGMEY_PP_MODE_OFF · UFLAGMEY_PP_SAVED_MARKED|1 · UFLAGMEY_PP_SAVED_KEEP_COUNT|2, UFLAGMEY_PP_SAVED_KEEP_AGE|1 · UFLAGMEY_PP_SAVED_KEEP_FIRST', $event['template_data']['UFLAGMEY_PP_SAVED']);
 		$this->assertSame('UFLAGMEY_PP_SAVED_FOR|A', $event['template_data']['UFLAGMEY_PP_SAVED_FOR'], 'label with the forum name');
 		$this->assertSame(2, $event['template_data']['UFLAGMEY_PP_MODE'], 'the form itself shows the posted value');
 		$this->assertSame(9, $event['template_data']['UFLAGMEY_PP_KEEP_COUNT']);
@@ -246,10 +252,10 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$result = $this->form_preview(['uflagmey_pp_keep_count' => '1']);
 
 		$day = function ($days) {
-			return gmdate('Y-m-d', fixtures::NOW - $days * fixtures::DAY);
+			return gmdate('Y-m-d', $this->now - $days * fixtures::DAY);
 		};
-		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|3|3|' . $day(4) . '|' . $day(2) . '|0', $result,
-			'keep the newest 1 besides the start post: posts 102, 103, 104');
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|3|3|' . $day(4) . '|' . $day(2) . '|0<br>UFLAGMEY_PP_PREVIEW_RULE|UFLAGMEY_PP_SAVED_KEEP_COUNT|1, UFLAGMEY_PP_SAVED_KEEP_AGE|1', $result,
+			'keep the newest 1 besides the start post: posts 102, 103, 104; the rule line names both conditions');
 		$this->assertSame([], $this->logs, 'no log entry');
 		$this->assertCount(5, fixtures::post_ids($this->db));
 		$this->assertSame('0,1,1,2', implode(',', $this->db->sql_fetchrow($this->db->sql_query('SELECT uflagmey_pp_mode, uflagmey_pp_scope, uflagmey_pp_rule, uflagmey_pp_keep_count FROM phpbb_forums WHERE forum_id = 3'))),
@@ -258,12 +264,21 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 
 	public function test_form_values_equal_to_the_stored_ones_give_the_plain_result()
 	{
-		$stored = ['uflagmey_pp_scope' => '1', 'uflagmey_pp_rule' => '1', 'uflagmey_pp_days' => '30', 'uflagmey_pp_keep_count' => '2', 'uflagmey_pp_keep_first' => '1', 'uflagmey_pp_skip_sticky' => '1'];
+		$stored = ['uflagmey_pp_scope' => '1', 'uflagmey_pp_rule' => '1', 'uflagmey_pp_days' => '1', 'uflagmey_pp_keep_count' => '2', 'uflagmey_pp_keep_first' => '1', 'uflagmey_pp_skip_sticky' => '1'];
 		$full = $this->form_preview($stored);
 		$this->assertStringStartsWith('UFLAGMEY_PP_PREVIEW_RESULT|2|2|', $full, 'same count as the stored settings, no marker');
 
 		$this->assertSame($full, $this->form_preview(['uflagmey_pp_keep_count' => '2']), 'fields missing from the POST keep the stored value');
 		$this->assertSame($full, $this->form_preview(['uflagmey_pp_mode' => '2', 'uflagmey_pp_count_sync' => '1'] + $stored), 'mode and post counts do not count');
+	}
+
+	public function test_form_post_age_is_the_minimum_age_of_rule_count()
+	{
+		// keep the newest 2 besides the start post (104, 105); of 102 (4 d) and 103 (3 d) only 102 is older than 3 days
+		$result = $this->form_preview(['uflagmey_pp_days' => '3']);
+		$day4 = gmdate('Y-m-d', $this->now - 4 * fixtures::DAY);
+		$this->assertSame('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|1|1|' . $day4 . '|' . $day4 . '|0<br>UFLAGMEY_PP_PREVIEW_RULE|UFLAGMEY_PP_SAVED_KEEP_COUNT|2, UFLAGMEY_PP_SAVED_KEEP_AGE|3', $result);
+		$this->assertStringStartsWith('UFLAGMEY_PP_PREVIEW_UNSAVED|UFLAGMEY_PP_PREVIEW_RESULT|0|0|', $this->form_preview(['uflagmey_pp_days' => '4']), '102 is exactly 4 days old: not older');
 	}
 
 	public function test_invalid_form_values_give_the_errors_of_saving_and_no_count()

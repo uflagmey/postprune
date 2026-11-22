@@ -17,6 +17,7 @@ use uflagmey\postprune\prune\query_builder;
  * Deletion rule "count" (beta5): per marked topic keep the newest X approved posts
  * (post_time, then post_id), delete everything ordered before the X-th newest one,
  * whatever its visibility. With keep_first the start post neither counts nor goes.
+ * Since rc1 also older than the post age (minimum age, see keep_age_test).
  */
 class keep_count_test extends \PHPUnit\Framework\TestCase
 {
@@ -52,7 +53,8 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 	}
 
 	/**
-	 * Forum 1 "K": rule count, scope marked, X, keep_first.
+	 * Forum 1 "K": rule count, scope marked, X, keep_first. Post age (minimum age, rc1) 1 day:
+	 * every post of topic() but the newest is older, so only X binds here (see keep_age_test).
 	 */
 	protected function forum($x = 100, $keep_first = 1, $mode = 2, array $extra = [])
 	{
@@ -62,6 +64,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 			'uflagmey_pp_rule'			=> 1,
 			'uflagmey_pp_keep_count'	=> $x,
 			'uflagmey_pp_keep_first'	=> $keep_first,
+			'uflagmey_pp_days'			=> 1,
 		], $extra));
 	}
 
@@ -112,7 +115,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertSame(array_merge([10001], range(10051, 10150)), $this->ids(10));
 		$this->assertSame(range(11001, 11080), $this->ids(11));
-		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPICS', ['K', 49, 2, 100]]], $this->logs);
+		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPICS', ['K', 49, 2, 100, 1]]], $this->logs);
 	}
 
 	public function test_boundary_exactly_x_and_x_plus_one()
@@ -193,7 +196,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->topic(12, 5);
 		$result = $this->pruner()->run(fixtures::NOW, 1000);
 		$dry = $result['dryrun'][1];
-		$this->assertSame([['LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPICS', ['K', $dry, 3, 20]]], $this->logs);
+		$this->assertSame([['LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPICS', ['K', $dry, 3, 20, 1]]], $this->logs);
 
 		$this->db->sql_query('UPDATE phpbb_forums SET uflagmey_pp_mode = 2');
 		$before = count(fixtures::post_ids($this->db));
@@ -211,7 +214,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 
 		$this->assertCount(11, $this->ids(10));
 		$this->assertCount(30, $this->ids(11), 'not marked');
-		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC', ['K', 19, 1, 10]]], $this->logs);
+		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC', ['K', 19, 1, 10, 1]]], $this->logs);
 	}
 
 	public function test_rule_count_with_scope_forum_affects_nothing()

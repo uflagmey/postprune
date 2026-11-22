@@ -341,9 +341,11 @@ class pruner
 
 	/**
 	 * Log entry of a dry run or a deletion. Scope "whole forum": $prefix;
-	 * "marked topics only": $prefix_TOPIC(S), rule "count" $prefix_KEEP_TOPIC(S)
-	 * with X as fourth value. With soft-deleted posts among them: the same key
-	 * with _SOFT and their number as the last value (older entries stay readable).
+	 * "marked topics only": $prefix_TOPIC(S), rule "count" $prefix_KEEP_AGE_TOPIC(S)
+	 * with X as fourth and the minimum age N (days) as fifth value. With soft-deleted
+	 * posts among them: the same key with _SOFT and their number as the last value.
+	 * Older keys (_KEEP_TOPIC(S), beta5 without minimum age) stay in the language
+	 * files, so existing log entries stay readable.
 	 *
 	 * @param string	$prefix			LOG_UFLAGMEY_PP_DRYRUN or LOG_UFLAGMEY_PP_PRUNED
 	 * @param array		$forum
@@ -360,8 +362,8 @@ class pruner
 		}
 		else if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
 		{
-			$operation = $prefix . '_KEEP' . (($topics === 1) ? '_TOPIC' : '_TOPICS');
-			$data = [$forum['forum_name'], $num, $topics, $this->query_builder->keep_count($forum)];
+			$operation = $prefix . '_KEEP_AGE' . (($topics === 1) ? '_TOPIC' : '_TOPICS');
+			$data = [$forum['forum_name'], $num, $topics, $this->query_builder->keep_count($forum), $this->query_builder->days($forum)];
 		}
 		else
 		{

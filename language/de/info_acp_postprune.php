@@ -111,4 +111,39 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten)',
 		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht, davon %5$d soft-gelöscht (neueste %4$d je Thema behalten)',
 	],
+	// rule "count" with minimum age (rc1): X 4th value, N (days) 5th, soft-deleted 6th; the _KEEP_ keys above stay for older entries
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPIC'	=> [
+		0	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» Im %3$d markierten Thema im Forum „%1$s“ würde kein Beitrag gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Thema im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ würden gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPICS'	=> [
+		0	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» In den %3$d markierten Themen im Forum „%1$s“ würde kein Beitrag gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ würden gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPICS'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPIC_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ würden gelöscht, davon %6$d soft-gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPICS_SOFT'	=> [
+		1	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ würde gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ würden gelöscht, davon %6$d soft-gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Thema im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Thema im Forum „%1$s“ gelöscht, davon %6$d soft-gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPICS_SOFT'	=> [
+		1	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beitrag (soft-gelöscht) in %3$d markierten Themen im Forum „%1$s“ gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+		2	=> '<strong>Beitrags-Pruning</strong><br>» %2$d Beiträge in %3$d markierten Themen im Forum „%1$s“ gelöscht, davon %6$d soft-gelöscht (neueste %4$d je Thema behalten, ältere nach %5$d Tag(en) löschen)',
+	],
 ]);

@@ -180,6 +180,18 @@ class query_builder
 	}
 
 	/**
+	 * Post age N in days of a forum row, as cutoff() uses it (at least 1). Rule "age":
+	 * older posts go; rule "count": the minimum age of the posts outside the newest X.
+	 *
+	 * @param array $forum
+	 * @return int
+	 */
+	public function days(array $forum)
+	{
+		return max(1, (int) $forum['uflagmey_pp_days']);
+	}
+
+	/**
 	 * Candidate posts of one forum, oldest first: approved and soft-deleted posts only
 	 * (see candidates_where()).
 	 *
@@ -398,8 +410,10 @@ class query_builder
 
 	/**
 	 * Rule "age": older than the cutoff. Rule "count": per topic everything
-	 * ordered before its boundary (post_time, then post_id); topics without a
-	 * boundary (fewer than X approved posts) and an empty $bounds select nothing.
+	 * ordered before its boundary (post_time, then post_id) AND older than the
+	 * cutoff (minimum age, rc1: a burst of new replies deletes nothing younger
+	 * than N days); topics without a boundary (fewer than X approved posts) and
+	 * an empty $bounds select nothing.
 	 * Both rules: only approved and soft-deleted posts. Posts waiting for approval
 	 * (unapproved, reapprove) or with any other visibility are never deleted.
 	 *
@@ -428,11 +442,10 @@ class query_builder
 			$where .= '
 			AND ' . ($terms ? '(' . implode("\n\t\t\t\tOR ", $terms) . ')' : '1 = 0');
 		}
-		else
-		{
-			$where .= '
+
+		// Both rules: older than "post age" (rule "count": the minimum age)
+		$where .= '
 			AND p.post_time < ' . $this->cutoff($forum['uflagmey_pp_days'], $now);
-		}
 
 		if (!empty($forum['uflagmey_pp_keep_first']))
 		{

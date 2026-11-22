@@ -454,21 +454,21 @@ class listener implements EventSubscriberInterface
 			$unsaved = $unsaved || !isset($stored[$key]) || (int) $stored[$key] !== (int) $value;
 		}
 
-		$text = $this->preview_text($forum_id, $values);
-
-		return $unsaved ? $this->language->lang('UFLAGMEY_PP_PREVIEW_UNSAVED', $text) : $text;
+		return $this->preview_text($forum_id, $values, $unsaved);
 	}
 
 	/**
 	 * Result of the preview, shown right below the "Saved for …" line (which names the
 	 * settings): "→ n posts would be deleted (oldest: <date>, newest to be deleted: <date>)",
-	 * dates in the board/user date format with time.
+	 * dates in the board/user date format with time. Rule "count": a last line names
+	 * the rule counted with, both conditions (rc1: X and the minimum age).
 	 *
 	 * @param int		$forum_id
 	 * @param array	$form		Values from the form, already checked (see form_preview_text()); empty: stored settings
+	 * @param bool		$unsaved	The form values differ from the stored ones
 	 * @return string
 	 */
-	protected function preview_text($forum_id, array $form = [])
+	protected function preview_text($forum_id, array $form = [], $unsaved = false)
 	{
 		$result = $this->pruner->preview($forum_id, time(), $form);
 		if (!$result)
@@ -483,11 +483,33 @@ class listener implements EventSubscriberInterface
 
 		$sep = $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP');
 
-		return $this->language->lang($result['softdeleted'] ? 'UFLAGMEY_PP_PREVIEW_RESULT_SOFT' : 'UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
+		$text = $this->language->lang($result['softdeleted'] ? 'UFLAGMEY_PP_PREVIEW_RESULT_SOFT' : 'UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
 			number_format($result['num'], 0, '', $sep),
 			$result['num'] ? $this->user->format_date($result['oldest'], false, true) : '',
 			$result['num'] ? $this->user->format_date($result['newest'], false, true) : '',
 			number_format($result['softdeleted'], 0, '', $sep));
+		if ($unsaved)
+		{
+			$text = $this->language->lang('UFLAGMEY_PP_PREVIEW_UNSAVED', $text);
+		}
+		if ($this->query_builder->rule($result['forum']) === query_builder::RULE_COUNT)
+		{
+			$text .= '<br>' . $this->language->lang('UFLAGMEY_PP_PREVIEW_RULE', $this->count_rule_text($result['forum']));
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Rule "count" in words, both conditions: "keep the newest 100 per topic, delete older ones after 30 days".
+	 *
+	 * @param array $forum	Settings row (stored, or overlaid with the form)
+	 * @return string
+	 */
+	protected function count_rule_text(array $forum)
+	{
+		return $this->language->lang('UFLAGMEY_PP_SAVED_KEEP_COUNT', $this->query_builder->keep_count($forum))
+			. ', ' . $this->language->lang('UFLAGMEY_PP_SAVED_KEEP_AGE', $this->query_builder->days($forum));
 	}
 
 	/**
@@ -539,11 +561,11 @@ class listener implements EventSubscriberInterface
 
 		if ($this->query_builder->rule($forum) === query_builder::RULE_COUNT)
 		{
-			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_KEEP_COUNT', $this->query_builder->keep_count($forum));
+			$parts[] = $this->count_rule_text($forum);
 		}
 		else
 		{
-			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_DAYS', max(1, (int) $forum['uflagmey_pp_days']));
+			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_DAYS', $this->query_builder->days($forum));
 		}
 
 		$parts[] = $this->language->lang(empty($forum['uflagmey_pp_keep_first']) ? 'UFLAGMEY_PP_SAVED_KEEP_FIRST_NO' : 'UFLAGMEY_PP_SAVED_KEEP_FIRST');

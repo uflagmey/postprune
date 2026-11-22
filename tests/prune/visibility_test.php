@@ -75,7 +75,7 @@ class visibility_test extends \PHPUnit\Framework\TestCase
 
 		$preview = $this->pruner()->preview(1, fixtures::NOW);
 		$this->assertSame([3, 1], [$preview['num'], $preview['softdeleted']], '102, 104 and 105 (soft-deleted)');
-		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_TOPIC_SOFT', ['K', 3, 1, 2, 1]]], $this->run_mode(1, 2));
+		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC_SOFT', ['K', 3, 1, 2, 1, 1]]], $this->run_mode(1, 2));
 		$this->assertSame([101, 103, 106, 107, 108], fixtures::post_ids($this->db));
 	}
 

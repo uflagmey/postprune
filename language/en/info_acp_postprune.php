@@ -111,4 +111,39 @@ $lang = array_merge($lang, [
 		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic)',
 		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s”, %5$d of them soft-deleted (keeping the newest %4$d per topic)',
 	],
+	// rule "count" with minimum age (rc1): X 4th value, N (days) 5th, soft-deleted 6th; the _KEEP_ keys above stay for older entries
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPIC'	=> [
+		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPICS'	=> [
+		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPICS'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPIC_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topic in forum “%1$s” would be deleted, %6$d of them soft-deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_AGE_TOPICS_SOFT'	=> [
+		1	=> '<strong>Dry run: post pruning</strong><br>» %2$d post (soft-deleted) in %3$d marked topics in forum “%1$s” would be deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Dry run: post pruning</strong><br>» %2$d posts in %3$d marked topics in forum “%1$s” would be deleted, %6$d of them soft-deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPIC_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topic in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topic in forum “%1$s”, %6$d of them soft-deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
+	'LOG_UFLAGMEY_PP_PRUNED_KEEP_AGE_TOPICS_SOFT'	=> [
+		1	=> '<strong>Post pruning</strong><br>» %2$d post (soft-deleted) deleted in %3$d marked topics in forum “%1$s” (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+		2	=> '<strong>Post pruning</strong><br>» %2$d posts deleted in %3$d marked topics in forum “%1$s”, %6$d of them soft-deleted (keeping the newest %4$d per topic, deleting older ones after %5$d day(s))',
+	],
 ]);

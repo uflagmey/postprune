@@ -177,13 +177,15 @@ class topic_listener implements EventSubscriberInterface
 
 		if ($this->query_builder->rule($topic) === query_builder::RULE_COUNT)
 		{
-			// One sentence: "only the newest X posts remain[, as well as the first post]".
+			// "The newest X posts remain[, as well as the first post]." plus the minimum age (rc1):
+			// "Older posts are deleted once they are older than N days." (dry run: "… Only visible to administrators.")
 			$key = 'UFLAGMEY_PP_NOTICE_COUNT' . ($keep_first ? '_KEEP_FIRST' : '') . ($dryrun ? '_DRYRUN' : '');
-			$text = $this->language->lang($key, $this->query_builder->keep_count($topic));
+			$text = $this->language->lang($key, $this->query_builder->keep_count($topic))
+				. ' ' . $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_COUNT_AGE_DRYRUN' : 'UFLAGMEY_PP_NOTICE_COUNT_AGE', $this->query_builder->days($topic));
 		}
 		else
 		{
-			$text = $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_DRYRUN' : 'UFLAGMEY_PP_NOTICE', (int) $topic['uflagmey_pp_days']);
+			$text = $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_DRYRUN' : 'UFLAGMEY_PP_NOTICE', $this->query_builder->days($topic));
 			if ($keep_first)
 			{
 				$text .= ' ' . $this->language->lang($dryrun ? 'UFLAGMEY_PP_NOTICE_KEEP_FIRST_DRYRUN' : 'UFLAGMEY_PP_NOTICE_KEEP_FIRST');

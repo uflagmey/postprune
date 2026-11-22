@@ -50,7 +50,7 @@
 		</dl>
 		{% endif %}
 		<dl>
-			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}{% if S_UFLAGMEY_PP_KEEP_COUNT %} {{ lang('UFLAGMEY_PP_ONLY_RULE_AGE') }}{% endif %}</span></dt>
+			<dt><label for="uflagmey_pp_days">{{ lang('UFLAGMEY_PP_DAYS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_DAYS_EXPLAIN') }}{% if S_UFLAGMEY_PP_KEEP_COUNT %} {{ lang('UFLAGMEY_PP_DAYS_EXPLAIN_COUNT') }}{% endif %}</span></dt>
 			<dd><input type="number" id="uflagmey_pp_days" name="uflagmey_pp_days" value="{{ UFLAGMEY_PP_DAYS }}" min="1" max="{{ UFLAGMEY_PP_DAYS_MAX }}"> {{ lang('DAYS') }}</dd>
 		</dl>
 		{% if S_UFLAGMEY_PP_KEEP_COUNT %}
