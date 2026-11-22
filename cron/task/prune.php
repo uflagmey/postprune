@@ -34,13 +34,15 @@ class prune extends \phpbb\cron\task\base
 	/**
 	 * At least one post forum has post pruning switched on. phpBB asks this on
 	 * ordinary page requests (page footer cron check), so it must work in any
-	 * schema state (pruner::has_forums()).
+	 * schema state (pruner::has_forums()). The core calls is_runnable() before
+	 * should_run() (cron\task\wrapper::is_ready()): the cheap time check comes
+	 * first, the database is only asked when the task is due (rc1).
 	 *
 	 * @return bool
 	 */
 	public function is_runnable()
 	{
-		return $this->pruner->has_forums();
+		return $this->should_run() && $this->pruner->has_forums();
 	}
 
 	/**
