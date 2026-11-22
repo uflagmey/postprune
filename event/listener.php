@@ -170,7 +170,16 @@ class listener implements EventSubscriberInterface
 		$forum_data = $event['forum_data'];
 		$edit = ($event['action'] === 'edit' && !empty($forum_data['forum_id']));
 
-		$event['forum_data'] = array_merge($forum_data, $this->posted_settings($this->settings(), $edit ? (int) $forum_data['forum_id'] : 0));
+		$forum_data = array_merge($forum_data, $this->posted_settings($this->settings(), $edit ? (int) $forum_data['forum_id'] : 0));
+
+		// rc1: a forum that becomes a category or a link is switched Off, so that turning it back
+		// into a post forum does not silently start deleting again with the old settings.
+		if (isset($forum_data['forum_type']) && (int) $forum_data['forum_type'] !== FORUM_POST && array_key_exists('uflagmey_pp_mode', $forum_data))
+		{
+			$forum_data['uflagmey_pp_mode'] = query_builder::MODE_OFF;
+		}
+
+		$event['forum_data'] = $forum_data;
 	}
 
 	/**

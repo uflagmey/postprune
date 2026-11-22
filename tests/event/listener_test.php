@@ -141,6 +141,27 @@ class listener_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([], $event['errors'], 'plain numbers, also with leading zeros, are fine');
 	}
 
+	/**
+	 * rc1 (R-12, V-12): a forum that becomes a category or a link is switched Off; the other settings stay.
+	 */
+	public function test_forum_type_change_switches_off()
+	{
+		$post = ['uflagmey_pp_mode' => '2', 'uflagmey_pp_scope' => '0', 'uflagmey_pp_days' => '45',
+			'uflagmey_pp_keep_first' => '1', 'uflagmey_pp_skip_sticky' => '1', 'uflagmey_pp_count_sync' => '0'];
+		foreach ([FORUM_CAT, FORUM_LINK] as $type)
+		{
+			$data = $this->request_data($this->listener($post), 'edit', ['forum_id' => 3, 'forum_type' => $type]);
+			$this->assertSame(0, $data['uflagmey_pp_mode'], 'type ' . $type);
+			$this->assertSame(45, $data['uflagmey_pp_days']);
+		}
+
+		$data = $this->request_data($this->listener(['forum_name' => 'A']), 'edit', ['forum_id' => 3, 'forum_type' => FORUM_CAT]);
+		$this->assertSame(0, $data['uflagmey_pp_mode'], 'stored mode (dry run) without our fields: switched off as well');
+
+		$data = $this->request_data($this->listener($post), 'edit', ['forum_id' => 3, 'forum_type' => FORUM_POST]);
+		$this->assertSame(2, $data['uflagmey_pp_mode'], 'post forum: as posted');
+	}
+
 	public function test_edit_without_our_fields_keeps_the_stored_values()
 	{
 		$data = $this->request_data($this->listener(['forum_name' => 'A']), 'edit', ['forum_id' => 3]);
