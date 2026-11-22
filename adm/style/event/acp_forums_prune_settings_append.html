@@ -37,7 +37,7 @@
 		<dl id="uflagmey_pp_marked">
 			<dt><label>{{ lang('UFLAGMEY_PP_MARKED_TOPICS') ~ lang('COLON') }}</label><br><span>{{ lang('UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN') }}</span></dt>
 			{% if UFLAGMEY_PP_MARKED_INACTIVE %}<dd class="uflagmey-pp-marked-inactive">{{ UFLAGMEY_PP_MARKED_INACTIVE }}</dd>{% endif %}
-			<dd class="uflagmey-pp-marked-list">{% for topic in UFLAGMEY_PP_MARKED %}{% if not loop.first %}<br>{% endif %}<a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }}){% else %}{{ lang('UFLAGMEY_PP_MARKED_NONE') }}{% endfor %}</dd>
+			<dd class="uflagmey-pp-marked-list">{% for topic in UFLAGMEY_PP_MARKED %}{% if not loop.first %}<br>{% endif %}{% if topic.S_HIDDEN %}{{ lang('UFLAGMEY_PP_MARKED_TOPIC_ID', topic.ID) }}{% else %}<a href="{{ topic.U_VIEW }}">{{ topic.TITLE }}</a> (ID {{ topic.ID }}){% endif %}{% else %}{{ lang('UFLAGMEY_PP_MARKED_NONE') }}{% endfor %}</dd>
 		</dl>
 		{% endif %}
 		{% if S_UFLAGMEY_PP_KEEP_COUNT %}

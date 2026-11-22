@@ -44,6 +44,7 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SCOPE_MARKED'			=> 'Marked topics only',
 	'UFLAGMEY_PP_MARKED_TOPICS'		=> 'Marked topics',
 	'UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN'	=> 'Topics of this forum that are marked for automatic pruning.',
+	'UFLAGMEY_PP_MARKED_TOPIC_ID'		=> 'Topic %d (no read permission for this forum)',
 	'UFLAGMEY_PP_MARKED_NONE'			=> 'No topics marked. Mark them in the topic view via the moderator tools.',
 	'UFLAGMEY_PP_MARKED_INACTIVE'		=> [
 		1 => '%d topic is marked in this forum. The mark only takes effect with the scope “Marked topics only”.',

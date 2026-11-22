@@ -261,6 +261,13 @@ class topic_listener implements EventSubscriberInterface
 			send_status_line(403, 'Forbidden');
 			trigger_error('UFLAGMEY_PP_QM_NOT_POSSIBLE');
 		}
+		// rc1: mcp.php checks f_read for the forum it derives from p or f; we act on t. Both must be this
+		// topic's forum, and the reader needs f_read there (no title of an unreadable topic, no mark).
+		if (!$this->same_topic($topic) || !$this->auth->acl_get('f_read', (int) $topic['forum_id']))
+		{
+			send_status_line(403, 'Forbidden');
+			trigger_error('NOT_AUTHORISED');
+		}
 
 		$mark = ($action === self::ACTION_MARK);
 		$topic_id = (int) $topic['topic_id'];
@@ -302,6 +309,33 @@ class topic_listener implements EventSubscriberInterface
 
 		// Cancelled (or a confirm POST without valid confirm key): back to the topic, nothing changed.
 		redirect($u_topic);
+	}
+
+	/**
+	 * The p and f parameters of the request, if any, belong to the topic read from t.
+	 *
+	 * @param array $topic	Row from get_topic()
+	 * @return bool
+	 */
+	protected function same_topic(array $topic)
+	{
+		$forum_id = $this->request->variable('f', 0);
+		if ($forum_id && $forum_id !== (int) $topic['forum_id'])
+		{
+			return false;
+		}
+
+		$post_id = $this->request->variable('p', 0);
+		if (!$post_id)
+		{
+			return true;
+		}
+
+		$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $this->query_builder->post_topic_query($post_id)));
+		$post_topic = (int) $this->db->sql_fetchfield('topic_id');
+		$this->db->sql_freeresult($result);
+
+		return $post_topic === (int) $topic['topic_id'];
 	}
 
 	/**

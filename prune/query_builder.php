@@ -349,6 +349,21 @@ class query_builder
 	}
 
 	/**
+	 * Topic of one post (quick-mod mark: the p parameter must belong to the topic, rc1).
+	 *
+	 * @param int $post_id
+	 * @return array
+	 */
+	public function post_topic_query($post_id)
+	{
+		return [
+			'SELECT'	=> 'p.topic_id',
+			'FROM'		=> [$this->posts_table => 'p'],
+			'WHERE'		=> 'p.post_id = ' . (int) $post_id,
+		];
+	}
+
+	/**
 	 * Forum of one topic (cron cursor: in which forum the last run stopped).
 	 *
 	 * @param int $topic_id

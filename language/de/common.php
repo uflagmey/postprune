@@ -44,6 +44,7 @@ $lang = array_merge($lang, [
 	'UFLAGMEY_PP_SCOPE_MARKED'			=> 'Nur markierte Themen',
 	'UFLAGMEY_PP_MARKED_TOPICS'		=> 'Markierte Themen',
 	'UFLAGMEY_PP_MARKED_TOPICS_EXPLAIN'	=> 'Themen dieses Forums, die zum automatischen Kürzen markiert sind.',
+	'UFLAGMEY_PP_MARKED_TOPIC_ID'		=> 'Thema %d (kein Leserecht auf dieses Forum)',
 	'UFLAGMEY_PP_MARKED_NONE'			=> 'Keine Themen markiert. Markieren in der Themenansicht über die Moderations-Werkzeuge.',
 	'UFLAGMEY_PP_MARKED_INACTIVE'		=> [
 		1 => 'In diesem Forum ist %d Thema markiert. Die Markierung wirkt erst, wenn der Geltungsbereich „Nur markierte Themen“ eingestellt ist.',

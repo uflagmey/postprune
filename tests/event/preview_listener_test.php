@@ -27,6 +27,9 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 	/** @var array */
 	protected $logs = [];
 
+	/** @var array Forums the admin may not read (f_read) */
+	protected $no_read = [];
+
 	/** @var array format_date() arguments after the time */
 	protected $date_calls = [];
 
@@ -78,8 +81,8 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 			return implode('|', func_get_args());
 		});
 		$auth = $this->createMock(\phpbb\auth\auth::class);
-		$auth->method('acl_get')->willReturnCallback(function ($option) use ($a_forum) {
-			return $option === 'a_forum' && $a_forum;
+		$auth->method('acl_get')->willReturnCallback(function ($option, $forum_id = 0) use ($a_forum) {
+			return ($option === 'a_forum' && $a_forum) || ($option === 'f_read' && !in_array($forum_id, $this->no_read, true));
 		});
 		$user = $this->createMock(\phpbb\user::class);
 		$user->method('format_date')->willReturnCallback(function ($time, $format = false, $forcedate = false) {
@@ -143,6 +146,16 @@ class preview_listener_test extends \PHPUnit\Framework\TestCase
 		$this->assertStringStartsWith('./../adm/index.php?i=acp_forums&amp;mode=manage&amp;action=edit&amp;f=3&amp;uflagmey_pp_preview=1&amp;hash=', $data['U_UFLAGMEY_PP_PREVIEW']);
 		$this->assertStringEndsWith('hash=' . generate_link_hash('uflagmey_pp_preview.3'), $data['U_UFLAGMEY_PP_PREVIEW']);
 		$this->assertSame('', $data['UFLAGMEY_PP_PREVIEW_RESULT'], 'no result before the click');
+	}
+
+	public function test_marked_topics_list_hides_titles_without_f_read()
+	{
+		$data = $this->edit_form($this->listener([]));
+		$this->assertSame([['ID' => 10, 'TITLE' => 'T10', 'U_VIEW' => './../viewtopic.php?t=10', 'S_HIDDEN' => false]], $data['UFLAGMEY_PP_MARKED']);
+
+		$this->no_read = [3];
+		$data = $this->edit_form($this->listener([]));
+		$this->assertSame([['ID' => 10, 'TITLE' => '', 'U_VIEW' => '', 'S_HIDDEN' => true]], $data['UFLAGMEY_PP_MARKED'], 'rc1: no title, no link');
 	}
 
 	public function test_valid_request_shows_the_count_of_the_stored_settings()

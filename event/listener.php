@@ -592,11 +592,15 @@ class listener implements EventSubscriberInterface
 	}
 
 	/**
+	 * Marked topics of the forum for the ACP list. Without f_read on the forum (rc1) only the
+	 * topic IDs are shown, no titles and no links.
+	 *
 	 * @param int $forum_id
-	 * @return array [['ID' => int, 'TITLE' => string, 'U_VIEW' => string], ...]
+	 * @return array [['ID' => int, 'TITLE' => string, 'U_VIEW' => string, 'S_HIDDEN' => bool], ...]
 	 */
 	protected function marked_topics($forum_id)
 	{
+		$readable = $this->auth !== null && $this->auth->acl_get('f_read', $forum_id);
 		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->marked_topics_query($forum_id));
 		$result = $this->db->sql_query($sql);
 		$topics = [];
@@ -604,8 +608,9 @@ class listener implements EventSubscriberInterface
 		{
 			$topics[] = [
 				'ID'		=> (int) $row['topic_id'],
-				'TITLE'		=> $row['topic_title'],
-				'U_VIEW'	=> append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . (int) $row['topic_id']),
+				'TITLE'		=> $readable ? $row['topic_title'] : '',
+				'U_VIEW'	=> $readable ? append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . (int) $row['topic_id']) : '',
+				'S_HIDDEN'	=> !$readable,
 			];
 		}
 		$this->db->sql_freeresult($result);
