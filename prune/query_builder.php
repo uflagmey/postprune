@@ -63,6 +63,14 @@ class query_builder
 	}
 
 	/**
+	 * @return string	Forums table (pruner: which setting columns exist, see pruner::columns())
+	 */
+	public function forums_table()
+	{
+		return $this->forums_table;
+	}
+
+	/**
 	 * Forums with post pruning switched on. Only real post forums: categories
 	 * and links are ignored even if a mode is stored for them.
 	 *

@@ -35,7 +35,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->logs = [];
 	}
 
-	protected function pruner($schema = 0)
+	protected function pruner($schema = 0, $tools = false)
 	{
 		if ($schema)
 		{
@@ -51,7 +51,7 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$user->data = ['user_id' => 2];
 		$user->ip = '10.0.0.1';
 
-		return new pruner($this->db, $this->config, $log, $user, fixtures::query_builder(), './', 'php');
+		return new pruner($this->db, $this->config, $log, $user, fixtures::query_builder(), './', 'php', $tools ? new \phpbb\db\tools\tools($this->db) : null);
 	}
 
 	/**
@@ -323,10 +323,20 @@ class pruner_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED_TOPIC', ['S', 2, 1]]], $this->logs);
 	}
 
-	public function test_scope_marked_without_schema_marker_behaves_like_beta2()
+	public function test_scope_marked_without_schema_marker_is_skipped_not_whole_forum()
 	{
+		// rc1 (R-03): until beta5 this fell back to the whole forum (beta2 behaviour), a broader rule
 		$this->seed_scoped();
-		$this->pruner()->run(fixtures::NOW, 100);
+		$this->pruner(0, true)->run(fixtures::NOW, 100);
+
+		$this->assertSame([], fixtures::$delete_calls, 'neither the marked nor the unmarked topics');
+		$this->assertSame([['critical', 2, 'LOG_UFLAGMEY_PP_SKIPPED', ['S']]], $this->logs);
+	}
+
+	public function test_scope_forum_without_schema_marker_behaves_like_beta2()
+	{
+		$this->seed_scoped(['uflagmey_pp_scope' => 0]);
+		$this->pruner(0, true)->run(fixtures::NOW, 100);
 
 		$this->assertSame([101, 121, 102, 122], fixtures::$delete_calls[0][1], 'whole forum minus sticky, marks ignored');
 		$this->assertSame([['admin', 2, 'LOG_UFLAGMEY_PP_PRUNED', ['S', 4]]], $this->logs);

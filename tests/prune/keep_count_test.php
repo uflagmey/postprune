@@ -49,7 +49,7 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$user->data = ['user_id' => 2];
 		$user->ip = '10.0.0.1';
 
-		return new pruner($this->db, $this->config, $log, $user, fixtures::query_builder(), './', 'php');
+		return new pruner($this->db, $this->config, $log, $user, fixtures::query_builder(), './', 'php', new \phpbb\db\tools\tools($this->db));
 	}
 
 	/**
@@ -227,17 +227,18 @@ class keep_count_test extends \PHPUnit\Framework\TestCase
 		$this->assertSame([['LOG_UFLAGMEY_PP_DRYRUN', ['K', 0]]], $this->logs);
 	}
 
-	public function test_without_schema_marker_3_the_age_rule_applies()
+	public function test_without_schema_marker_3_a_stored_rule_count_skips_the_forum()
 	{
+		// rc1 (R-03): until beta5 the age rule applied here (fallback), now nothing is deleted
 		$this->config['uflagmey_pp_schema'] = 2;
 		$this->forum(10, 1, 2, ['uflagmey_pp_days' => 30]);
 		fixtures::topic($this->db, 1, 10, [100 => 90, 101 => 60, 102 => 40, 103 => 5], POST_NORMAL, ['uflagmey_pp_marked' => 1]);
 		$this->topic(11, 30);
 		$this->cycle();
 
-		$this->assertSame([100, 103], $this->ids(10), 'age rule: posts older than 30 days, start post kept');
-		$this->assertCount(30, $this->ids(11), 'young posts stay');
-		$this->assertSame([['LOG_UFLAGMEY_PP_PRUNED_TOPICS', ['K', 2, 2]]], $this->logs);
+		$this->assertSame([100, 101, 102, 103], $this->ids(10));
+		$this->assertCount(30, $this->ids(11));
+		$this->assertSame([['LOG_UFLAGMEY_PP_SKIPPED', ['K']]], $this->logs);
 	}
 
 	public function test_query_builder_boundary_and_clamp()

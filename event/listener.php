@@ -481,6 +481,11 @@ class listener implements EventSubscriberInterface
 			return $this->language->lang('UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM');
 		}
 
+		if ($result['doubt'])
+		{
+			return $this->language->lang('UFLAGMEY_PP_PREVIEW_DOUBT');
+		}
+
 		$sep = $this->language->lang('UFLAGMEY_PP_THOUSANDS_SEP');
 
 		$text = $this->language->lang($result['softdeleted'] ? 'UFLAGMEY_PP_PREVIEW_RESULT_SOFT' : 'UFLAGMEY_PP_PREVIEW_RESULT', $result['num'],
@@ -576,6 +581,10 @@ class listener implements EventSubscriberInterface
 		if (!empty($forum['uflagmey_pp_count_sync']))
 		{
 			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_COUNT_SYNC');
+		}
+		if (settings::doubt($forum, schema::version($this->config)))
+		{
+			$parts[] = $this->language->lang('UFLAGMEY_PP_SAVED_DOUBT');
 		}
 
 		return implode(' · ', $parts);

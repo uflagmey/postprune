@@ -13,6 +13,7 @@ namespace uflagmey\postprune\event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use uflagmey\postprune\prune\query_builder;
 use uflagmey\postprune\prune\schema;
+use uflagmey\postprune\prune\settings;
 
 /**
  * Topic notice "old posts here are deleted automatically", and the
@@ -141,6 +142,8 @@ class topic_listener implements EventSubscriberInterface
 	 * decided by query_builder::topic_where(), the same rule the cron uses.
 	 * The text follows the deletion rule (age or keep count). Without schema
 	 * marker 3 the rule column is not used (query_builder::rule() is "age").
+	 * Settings the cron does not understand (settings::doubt()): no notice, the
+	 * cron skips the forum.
 	 *
 	 * @param \phpbb\event\data $event
 	 */
@@ -151,6 +154,12 @@ class topic_listener implements EventSubscriberInterface
 		if (!schema::topic_scope($this->config) || (int) $topic['forum_type'] !== FORUM_POST
 			|| ($mode !== query_builder::MODE_ACTIVE && $mode !== query_builder::MODE_DRYRUN)
 			|| ($mode === query_builder::MODE_DRYRUN && !$this->auth->acl_get('a_forum')))
+		{
+			return;
+		}
+
+		// viewtopic reads f.*: every stored setting column that exists is in the row
+		if (settings::doubt($topic, schema::version($this->config)))
 		{
 			return;
 		}

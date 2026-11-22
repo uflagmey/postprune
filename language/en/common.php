@@ -120,6 +120,8 @@ $lang = array_merge($lang, [
 		2	=> '→ <strong>%2$s posts</strong> would be deleted, %5$s of them soft-deleted (oldest: %3$s, newest to be deleted: %4$s)',
 	],
 	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Not a post forum, post pruning does not process it.',
+	'UFLAGMEY_PP_PREVIEW_DOUBT'			=> '→ Stored setting unknown or update incomplete: the cron skips this forum and deletes nothing. Check the settings and save them with “Submit”, or finish the update.',
+	'UFLAGMEY_PP_SAVED_DOUBT'			=> '<strong>setting unknown – forum is skipped</strong>',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'The preview could not be calculated (database error).',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> ',',
 	'UFLAGMEY_PP_SAVED_MARKED'			=> 'Marked topics only (%d)',

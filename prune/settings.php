@@ -100,4 +100,40 @@ class settings
 
 		return $errors;
 	}
+
+	/**
+	 * "When in doubt, delete nothing" (rc1): does this version NOT understand a stored forum row?
+	 * True for an unknown mode, scope or rule value, and for a scope/rule other than the default
+	 * stored in a row whose schema marker does not cover that setting yet (update incomplete,
+	 * database restored, downgrade and back). Such a forum is skipped by cron, dry run, preview
+	 * and topic notice; never a fallback to a broader rule. Only the keys present are checked.
+	 *
+	 * @param array	$forum	Forum row (uflagmey_pp_* columns as read from the database)
+	 * @param int	$schema	schema::version()
+	 * @return bool
+	 */
+	public static function doubt(array $forum, $schema)
+	{
+		$known = [
+			'uflagmey_pp_mode'	=> [[query_builder::MODE_OFF, query_builder::MODE_DRYRUN, query_builder::MODE_ACTIVE], 0],
+			'uflagmey_pp_scope'	=> [[query_builder::SCOPE_FORUM, query_builder::SCOPE_MARKED], schema::TOPIC_SCOPE],
+			'uflagmey_pp_rule'	=> [[query_builder::RULE_AGE, query_builder::RULE_COUNT], schema::KEEP_COUNT],
+		];
+
+		foreach ($known as $key => list($values, $since))
+		{
+			if (!array_key_exists($key, $forum) || $forum[$key] === null)
+			{
+				continue;
+			}
+
+			$value = (int) $forum[$key];
+			if (!in_array($value, $values, true) || ((int) $schema < $since && $value !== $values[0]))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

@@ -120,6 +120,8 @@ $lang = array_merge($lang, [
 		2	=> '→ <strong>%2$s Beiträge</strong> würden gelöscht, davon %5$s soft-gelöscht (ältester vom %3$s, jüngster zu löschender vom %4$s)',
 	],
 	'UFLAGMEY_PP_PREVIEW_NOT_POST_FORUM'	=> '→ Kein Beitragsforum, das Beitrags-Pruning bearbeitet es nicht.',
+	'UFLAGMEY_PP_PREVIEW_DOUBT'			=> '→ Gespeicherte Einstellung unbekannt oder Update unvollständig: Der Cron überspringt dieses Forum und löscht nichts. Einstellungen prüfen und mit „Absenden“ speichern bzw. das Update abschließen.',
+	'UFLAGMEY_PP_SAVED_DOUBT'			=> '<strong>Einstellung unbekannt – Forum wird übersprungen</strong>',
 	'UFLAGMEY_PP_PREVIEW_FAILED'		=> 'Die Vorschau konnte nicht berechnet werden (Datenbankfehler).',
 	'UFLAGMEY_PP_THOUSANDS_SEP'			=> '.',
 	'UFLAGMEY_PP_SAVED_MARKED'			=> 'Nur markierte Themen (%d)',

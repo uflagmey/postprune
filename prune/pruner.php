@@ -38,6 +38,9 @@ class pruner
 	/** @var string */
 	protected $php_ext;
 
+	/** @var \phpbb\db\tools\tools_interface|null */
+	protected $db_tools;
+
 	/**
 	 * @param \phpbb\db\driver\driver_interface	$db
 	 * @param \phpbb\config\config				$config
@@ -46,8 +49,10 @@ class pruner
 	 * @param query_builder						$query_builder
 	 * @param string							$root_path
 	 * @param string							$php_ext
+	 * @param \phpbb\db\tools\tools_interface|null	$db_tools	null: built by an outdated container (rc1 added it);
+	 *																then only the columns the schema marker announces are read
 	 */
-	public function __construct(\phpbb\db\driver\driver_interface $db, \phpbb\config\config $config, \phpbb\log\log_interface $log, \phpbb\user $user, query_builder $query_builder, $root_path, $php_ext)
+	public function __construct(\phpbb\db\driver\driver_interface $db, \phpbb\config\config $config, \phpbb\log\log_interface $log, \phpbb\user $user, query_builder $query_builder, $root_path, $php_ext, $db_tools = null)
 	{
 		$this->db = $db;
 		$this->config = $config;
@@ -56,6 +61,39 @@ class pruner
 		$this->query_builder = $query_builder;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
+		$this->db_tools = $db_tools;
+	}
+
+	/**
+	 * Which setting columns to read: those the schema marker announces, and with a marker below 3
+	 * also scope/rule columns that exist anyway (update incomplete, database restored, downgrade
+	 * and back), so settings::doubt() can see a stored scope/rule the marker does not cover yet
+	 * instead of silently falling back to a broader rule (rc1, "when in doubt, delete nothing").
+	 *
+	 * @return array	[bool scope columns, bool rule columns] for query_builder::forums_query()
+	 */
+	protected function columns()
+	{
+		$scope = schema::topic_scope($this->config);
+		$rule = schema::keep_count($this->config);
+
+		if (!$rule && $this->db_tools instanceof \phpbb\db\tools\tools_interface)
+		{
+			$table = $this->query_builder->forums_table();
+			$scope = $scope || $this->db_tools->sql_column_exists($table, 'uflagmey_pp_scope');
+			$rule = $scope && $this->db_tools->sql_column_exists($table, 'uflagmey_pp_rule');
+		}
+
+		return [$scope, $rule];
+	}
+
+	/**
+	 * @param array $forum	Forum row
+	 * @return bool	The stored settings are not understood: skip the forum (settings::doubt())
+	 */
+	protected function doubt(array $forum)
+	{
+		return settings::doubt($forum, schema::version($this->config));
 	}
 
 	/**
@@ -65,7 +103,8 @@ class pruner
 	 */
 	public function get_forums()
 	{
-		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query(schema::topic_scope($this->config), schema::keep_count($this->config)));
+		list($scope, $rule) = $this->columns();
+		$sql = $this->db->sql_build_query('SELECT', $this->query_builder->forums_query($scope, $rule));
 		$result = $this->db->sql_query($sql);
 		$forums = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
@@ -96,7 +135,9 @@ class pruner
 	 * entry is written even with 0 candidates, as proof that the cron ran.
 	 * Forums with scope "marked topics only" name the number of marked topics
 	 * in their log entries; without any marked topic they get one entry per
-	 * cycle saying so (dry run and active).
+	 * cycle saying so (dry run and active). Forums whose stored settings are
+	 * not understood (settings::doubt()) are skipped, with one critical log
+	 * entry per cycle, also written in the run that closes the cycle.
 	 *
 	 * @param int	$now
 	 * @param int	$batch	Maximum number of posts to delete in this run
@@ -106,11 +147,23 @@ class pruner
 	{
 		$remaining = max(1, (int) $batch);
 		$backlog = false;
-		$pruned = $dryrun = $no_topics = [];
-		$forums = $this->select($this->query_builder->forums_query(schema::topic_scope($this->config), schema::keep_count($this->config)));
-		if ($forums === false)
+		$pruned = $dryrun = $no_topics = $skipped = [];
+		list($scope, $rule) = $this->columns();
+		$rows = $this->select($this->query_builder->forums_query($scope, $rule));
+		if ($rows === false)
 		{
 			return $this->schema_mismatch($pruned, $dryrun);
+		}
+
+		$forums = [];
+		foreach ($rows as $forum)
+		{
+			if ($this->doubt($forum))
+			{
+				$skipped[] = $forum;
+				continue;
+			}
+			$forums[] = $forum;
 		}
 
 		foreach ($forums as $forum)
@@ -170,6 +223,11 @@ class pruner
 
 		if (!$backlog)
 		{
+			foreach ($skipped as $forum)
+			{
+				$this->add_log('LOG_UFLAGMEY_PP_SKIPPED', [$forum['forum_name']], 'critical');
+			}
+
 			foreach ($no_topics as $forum)
 			{
 				$this->add_log('LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS', [$forum['forum_name']]);
@@ -217,13 +275,15 @@ class pruner
 	 * @param int	$now
 	 * @param array	$form	Values from the form, checked by settings::errors(); only
 	 *						settings::PREVIEW_KEYS count, as integers
-	 * @return array|null|false	['forum' => settings row used, 'post_forum' => bool, 'topics' => int|null,
+	 * @return array|null|false	['forum' => settings row used, 'post_forum' => bool, 'doubt' => bool, 'topics' => int|null,
 	 *							'num' => int, 'softdeleted' => int, 'oldest' => int, 'newest' => int];
+	 *							doubt: the settings are not understood, the cron skips the forum, nothing counted;
 	 *							null: no such forum; false: a query failed
 	 */
 	public function preview($forum_id, $now, array $form = [])
 	{
-		$rows = $this->select($this->query_builder->forum_query($forum_id, schema::topic_scope($this->config), schema::keep_count($this->config)));
+		list($scope, $rule) = $this->columns();
+		$rows = $this->select($this->query_builder->forum_query($forum_id, $scope, $rule));
 		if ($rows === false || !$rows)
 		{
 			return $rows === false ? false : null;
@@ -239,13 +299,19 @@ class pruner
 			}
 		}
 		$post_forum = ((int) $forum['forum_type'] === FORUM_POST);
-		$count = $post_forum ? $this->count($forum, $now) : ['topics' => $this->marked_topics($forum), 'num' => 0, 'softdeleted' => 0, 'oldest' => 0, 'newest' => 0];
-		if ($count === false || $count['topics'] === false)
+		$doubt = $this->doubt($forum);
+		if ($doubt || !$post_forum)
+		{
+			return ['forum' => $forum, 'post_forum' => $post_forum, 'doubt' => $doubt, 'topics' => null, 'num' => 0, 'softdeleted' => 0, 'oldest' => 0, 'newest' => 0];
+		}
+
+		$count = $this->count($forum, $now);
+		if ($count === false)
 		{
 			return false;
 		}
 
-		return ['forum' => $forum, 'post_forum' => $post_forum] + $count;
+		return ['forum' => $forum, 'post_forum' => $post_forum, 'doubt' => false] + $count;
 	}
 
 	/**
@@ -493,12 +559,13 @@ class pruner
 	 *
 	 * @param string	$operation
 	 * @param array		$data
+	 * @param string	$mode		admin or critical (error log)
 	 */
-	protected function add_log($operation, array $data)
+	protected function add_log($operation, array $data, $mode = 'admin')
 	{
 		$user_id = isset($this->user->data['user_id']) ? (int) $this->user->data['user_id'] : ANONYMOUS;
 		$ip = !empty($this->user->ip) ? $this->user->ip : '127.0.0.1';
 
-		$this->log->add('admin', $user_id, $ip, $operation, false, $data);
+		$this->log->add($mode, $user_id, $ip, $operation, false, $data);
 	}
 }

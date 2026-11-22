@@ -52,6 +52,7 @@ services:
             - '@uflagmey.postprune.query_builder'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '@dbal.tools'
 
     uflagmey.postprune.cron.task.prune:
         class: uflagmey\postprune\cron\task\prune
