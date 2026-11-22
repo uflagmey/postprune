@@ -63,6 +63,14 @@ class query_builder
 	}
 
 	/**
+	 * @return string	Topics table (pruner: which setting columns exist)
+	 */
+	public function topics_table()
+	{
+		return $this->topics_table;
+	}
+
+	/**
 	 * @return string	Forums table (pruner: which setting columns exist, see pruner::columns())
 	 */
 	public function forums_table()

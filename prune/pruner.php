@@ -168,7 +168,7 @@ class pruner
 		$rows = $this->select($this->query_builder->forums_query($scope, $rule));
 		if ($rows === false)
 		{
-			return $this->schema_mismatch($pruned, $dryrun);
+			return $this->sql_failure($pruned, $dryrun);
 		}
 
 		$cursor = isset($this->config[self::CURSOR]) ? (int) $this->config[self::CURSOR] : 0;
@@ -178,7 +178,7 @@ class pruner
 			$at = $this->select($this->query_builder->topic_forum_query($cursor));
 			if ($at === false)
 			{
-				return $this->schema_mismatch($pruned, $dryrun);
+				return $this->sql_failure($pruned, $dryrun);
 			}
 			// Topic gone or moved away meanwhile: start the cycle over
 			$cursor_forum = $at ? (int) $at[0]['forum_id'] : 0;
@@ -207,7 +207,7 @@ class pruner
 			$topics = $this->marked_topics($forum);
 			if ($topics === false)
 			{
-				return $this->schema_mismatch($pruned, $dryrun);
+				return $this->sql_failure($pruned, $dryrun);
 			}
 			if ($topics === 0)
 			{
@@ -232,7 +232,7 @@ class pruner
 				$result = $this->topic_rows($forum, $now, $remaining, ($forum_id === $cursor_forum) ? $cursor : 0, $last_done);
 				if ($result === false)
 				{
-					return $this->schema_mismatch($pruned, $dryrun);
+					return $this->sql_failure($pruned, $dryrun);
 				}
 				list($rows, $full) = $result;
 				$backlog = $backlog || $full;
@@ -243,7 +243,7 @@ class pruner
 				$rows = $this->select($this->query_builder->candidates_query($forum, $now), $remaining + 1);
 				if ($rows === false)
 				{
-					return $this->schema_mismatch($pruned, $dryrun);
+					return $this->sql_failure($pruned, $dryrun);
 				}
 
 				if (count($rows) > $remaining)
@@ -261,7 +261,15 @@ class pruner
 			$softdeleted = count(array_filter($rows, function ($row) {
 				return (int) $row['post_visibility'] === ITEM_DELETED;
 			}));
-			$deleted = $this->delete($rows, (bool) $forum['uflagmey_pp_count_sync']);
+			try
+			{
+				$deleted = $this->delete($rows, (bool) $forum['uflagmey_pp_count_sync']);
+			}
+			catch (\RuntimeException $e)
+			{
+				// SQL error inside delete_posts(): the driver rolled the transaction back (rc1)
+				return $this->sql_failure($pruned, $dryrun);
+			}
 			$remaining -= count($rows);
 			$pruned[(int) $forum['forum_id']] = $deleted;
 
@@ -300,7 +308,7 @@ class pruner
 				$count = $this->count($forum, $now);
 				if ($count === false)
 				{
-					return $this->schema_mismatch($pruned, $dryrun);
+					return $this->sql_failure($pruned, $dryrun);
 				}
 
 				$dryrun[(int) $forum['forum_id']] = $count['num'];
@@ -622,14 +630,29 @@ class pruner
 	 * Ends the run cleanly after an SQL error: one entry in the error log,
 	 * no backlog, so the cron task closes the cycle (last_run) and phpBB
 	 * releases its cron_lock. Next attempt in the next cycle.
+	 * rc1: a missing column the schema marker announces (database restored from an
+	 * older backup, stale cache) is LOG_UFLAGMEY_PP_SCHEMA_MISMATCH ("purge the cache");
+	 * any other error (timeout, deadlock, lock, a failing delete) is
+	 * LOG_UFLAGMEY_PP_SQL_ERROR with the database's message, shortened.
+	 * Without dbal.tools (outdated container) the columns cannot be checked: schema mismatch, as before.
 	 *
 	 * @param array $pruned
 	 * @param array $dryrun
 	 * @return array
 	 */
-	protected function schema_mismatch(array $pruned, array $dryrun)
+	protected function sql_failure(array $pruned, array $dryrun)
 	{
-		$this->add_log('LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', [], 'critical');
+		$error = $this->db->get_sql_error_returned();
+		if ($this->columns_missing())
+		{
+			$this->add_log('LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', [], 'critical');
+		}
+		else
+		{
+			$message = trim(strip_tags(is_array($error) && isset($error['message']) ? (string) $error['message'] : ''));
+			$message .= (is_array($error) && !empty($error['code'])) ? ' [' . $error['code'] . ']' : '';
+			$this->add_log('LOG_UFLAGMEY_PP_SQL_ERROR', [utf8_htmlspecialchars(utf8_substr($message, 0, 255))], 'critical');
+		}
 
 		return [
 			'backlog'	=> false,
@@ -639,9 +662,52 @@ class pruner
 	}
 
 	/**
+	 * Is a column missing that the schema marker announces?
+	 *
+	 * @return bool	true also when it cannot be checked (no dbal.tools)
+	 */
+	protected function columns_missing()
+	{
+		if (!$this->db_tools instanceof \phpbb\db\tools\tools_interface)
+		{
+			return true;
+		}
+
+		$forums = $this->query_builder->forums_table();
+		$columns = [[$forums, 'uflagmey_pp_mode'], [$forums, 'uflagmey_pp_days'], [$forums, 'uflagmey_pp_keep_first'],
+			[$forums, 'uflagmey_pp_skip_sticky'], [$forums, 'uflagmey_pp_count_sync']];
+		if (schema::topic_scope($this->config))
+		{
+			$columns[] = [$forums, 'uflagmey_pp_scope'];
+			$columns[] = [$this->query_builder->topics_table(), 'uflagmey_pp_marked'];
+		}
+		if (schema::keep_count($this->config))
+		{
+			$columns[] = [$forums, 'uflagmey_pp_rule'];
+			$columns[] = [$forums, 'uflagmey_pp_keep_count'];
+		}
+
+		foreach ($columns as list($table, $column))
+		{
+			if (!$this->db_tools->sql_column_exists($table, $column))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * delete_posts() runs its queries without return_on_error: an SQL error there ends in trigger_error(E_USER_ERROR),
+	 * and phpBB's message handler would end the request with the cron_lock still held (up to an hour).
+	 * For the duration of the call such an error is turned into a RuntimeException (rc1); the driver has rolled
+	 * back its transaction before, run() logs the error and ends the run cleanly.
+	 *
 	 * @param array	$rows			post_id + post_visibility of the posts to delete
 	 * @param bool	$count_sync		Reduce the authors' post counts
 	 * @return int	Number of deleted posts
+	 * @throws \RuntimeException	SQL error inside delete_posts()
 	 */
 	protected function delete(array $rows, $count_sync)
 	{
@@ -660,7 +726,17 @@ class pruner
 			}
 		}
 
-		$deleted = (int) delete_posts('post_id', $post_ids, true, true, $count_sync, true);
+		set_error_handler(function ($errno, $errstr) {
+			throw new \RuntimeException((string) $errstr);
+		}, E_USER_ERROR);
+		try
+		{
+			$deleted = (int) delete_posts('post_id', $post_ids, true, true, $count_sync, true);
+		}
+		finally
+		{
+			restore_error_handler();
+		}
 
 		// delete_posts() only lowers the board statistic num_posts together with
 		// the user post counts. Without count sync, correct it here, counting

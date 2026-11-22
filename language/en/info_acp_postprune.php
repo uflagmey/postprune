@@ -52,6 +52,7 @@ $lang = array_merge($lang, [
 	],
 	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: database schema does not match the cache – please purge the cache</strong>',
 	'LOG_UFLAGMEY_PP_SKIPPED'			=> '<strong>Post Prune: deletion rule unknown or update incomplete – forum skipped</strong><br>» Forum “%1$s”: this version does not understand the stored settings, nothing was deleted. Check and save the forum settings, or finish the update (disable and re-enable the extension).',
+	'LOG_UFLAGMEY_PP_SQL_ERROR'			=> '<strong>Post Prune: database error – run ended, next attempt in the next cycle</strong><br>» %s',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Post pruning</strong><br>» Forum “%1$s”: no marked topics, nothing deleted',
 	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC'	=> [
 		0	=> '<strong>Dry run: post pruning</strong><br>» No posts in %3$d marked topic in forum “%1$s” would be deleted (keeping the newest %4$d per topic)',
