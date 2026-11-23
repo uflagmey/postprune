@@ -10,7 +10,7 @@ phpBB-3.3-Extension: löscht in ausgewählten Foren **einzelne Beiträge** autom
 
 Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. Diese Extension arbeitet auf Beitragsebene und lässt sich mit dem Themen-Pruning kombinieren.
 
-> **Beta (1.0.0-beta5):** Erst auf einem Testboard oder mit Backup + Trockenlauf einsetzen.
+> **Release Candidate (1.0.0-rc1):** Erst auf einem Testboard oder mit Backup + Trockenlauf einsetzen.
 
 > **⚠ Achtung: Die Löschung ist hart und unwiderruflich.**
 > Gelöschte Beiträge landen nicht im Papierkorb (kein Soft-Delete). Beiträge, Dateianhänge (auch die Dateien in `files/`), Suchindex-Einträge, Meldungen und Benachrichtigungen sind danach weg. Ohne Backup gibt es keinen Weg zurück.
@@ -29,7 +29,7 @@ Das eingebaute Themen-Pruning von phpBB löscht ganze Themen nach Inaktivität. 
 
 ### Installation
 
-> **Download:** [Release v1.0.0-beta5](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta5) → Datei `postprune-1.0.0-beta5.zip` (alle Versionen: [Releases](https://github.com/uflagmey/postprune/releases)).
+> **Download:** [Release v1.0.0-rc1](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-rc1) → Datei `postprune-1.0.0-rc1.zip` (alle Versionen: [Releases](https://github.com/uflagmey/postprune/releases)).
 > **Nicht** über „Code → Download ZIP“ installieren: Das ist der Quellcode mit falscher Ordnerstruktur (`postprune-main/`) und kein Installationspaket.
 
 1. Das Release-ZIP entpacken und den Ordner `uflagmey/postprune/` nach `ext/` hochladen, so dass `ext/uflagmey/postprune/ext.php` existiert.
@@ -176,7 +176,7 @@ phpBB 3.3 extension: automatically and **permanently** deletes **individual post
 
 phpBB's built-in topic pruning removes whole topics after inactivity. This extension works on single posts and can be combined with topic pruning.
 
-> **Beta (1.0.0-beta5):** Use it on a test board first, or with a backup + dry run.
+> **Release Candidate (1.0.0-rc1):** Use it on a test board first, or with a backup + dry run.
 
 > **⚠ Warning: deletion is hard and irreversible.**
 > Deleted posts are not soft-deleted. Posts, attachments (including the files in `files/`), search index entries, reports and notifications are gone. Without a backup there is no way back.
@@ -195,7 +195,7 @@ phpBB's built-in topic pruning removes whole topics after inactivity. This exten
 
 ### Installation
 
-> **Download:** [Release v1.0.0-beta5](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-beta5) → file `postprune-1.0.0-beta5.zip` (all versions: [Releases](https://github.com/uflagmey/postprune/releases)).
+> **Download:** [Release v1.0.0-rc1](https://github.com/uflagmey/postprune/releases/tag/v1.0.0-rc1) → file `postprune-1.0.0-rc1.zip` (all versions: [Releases](https://github.com/uflagmey/postprune/releases)).
 > Do **not** install from “Code → Download ZIP”: that is the source code with the wrong folder layout (`postprune-main/`), not an installation package.
 
 1. Unpack the release ZIP and upload the folder `uflagmey/postprune/` to `ext/`, so that `ext/uflagmey/postprune/ext.php` exists.
