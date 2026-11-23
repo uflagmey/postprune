@@ -267,8 +267,9 @@ class pruner
 			}
 			catch (\RuntimeException $e)
 			{
-				// SQL error inside delete_posts(): the driver rolled the transaction back (rc1)
-				return $this->sql_failure($pruned, $dryrun);
+				// SQL error inside delete_posts() (rc1): an error before the core's commit is rolled back; an error
+				// in the steps after it (sync, empty topics) leaves the posts deleted. Named in the entry.
+				return $this->sql_failure($pruned, $dryrun, [$forum['forum_name'], count($rows), $e->getMessage()]);
 			}
 			$remaining -= count($rows);
 			$pruned[(int) $forum['forum_id']] = $deleted;
@@ -635,23 +636,37 @@ class pruner
 	 * any other error (timeout, deadlock, lock, a failing delete) is
 	 * LOG_UFLAGMEY_PP_SQL_ERROR with the database's message, shortened.
 	 * Without dbal.tools (outdated container) the columns cannot be checked: schema mismatch, as before.
+	 * An error inside delete_posts() is LOG_UFLAGMEY_PP_DELETE_ERROR with the forum and the number of
+	 * candidates of this run: part of them may already be deleted (error after the core's commit).
+	 * The cursor is set back to 0: the cycle is closed, the next one starts at the first topic (rc1, B-3).
 	 *
 	 * @param array $pruned
 	 * @param array $dryrun
+	 * @param array $delete	Error inside delete_posts(): [forum name, number of candidates, error text]
 	 * @return array
 	 */
-	protected function sql_failure(array $pruned, array $dryrun)
+	protected function sql_failure(array $pruned, array $dryrun, array $delete = [])
 	{
 		$error = $this->db->get_sql_error_returned();
-		if ($this->columns_missing())
+		$message = trim(strip_tags(is_array($error) && isset($error['message']) ? (string) $error['message'] : ''));
+		$message .= ($message !== '' && is_array($error) && !empty($error['code'])) ? ' [' . $error['code'] . ']' : '';
+		if ($delete)
+		{
+			$message = ($message !== '') ? $message : trim(strip_tags((string) $delete[2]));
+			$this->add_log('LOG_UFLAGMEY_PP_DELETE_ERROR', [$delete[0], (int) $delete[1], utf8_htmlspecialchars(utf8_substr($message, 0, 255))], 'critical');
+		}
+		else if ($this->columns_missing())
 		{
 			$this->add_log('LOG_UFLAGMEY_PP_SCHEMA_MISMATCH', [], 'critical');
 		}
 		else
 		{
-			$message = trim(strip_tags(is_array($error) && isset($error['message']) ? (string) $error['message'] : ''));
-			$message .= (is_array($error) && !empty($error['code'])) ? ' [' . $error['code'] . ']' : '';
 			$this->add_log('LOG_UFLAGMEY_PP_SQL_ERROR', [utf8_htmlspecialchars(utf8_substr($message, 0, 255))], 'critical');
+		}
+
+		if (isset($this->config[self::CURSOR]) && (int) $this->config[self::CURSOR] !== 0)
+		{
+			$this->config->set(self::CURSOR, 0, false);
 		}
 
 		return [
@@ -702,7 +717,9 @@ class pruner
 	 * delete_posts() runs its queries without return_on_error: an SQL error there ends in trigger_error(E_USER_ERROR),
 	 * and phpBB's message handler would end the request with the cron_lock still held (up to an hour).
 	 * For the duration of the call such an error is turned into a RuntimeException (rc1); the driver has rolled
-	 * back its transaction before, run() logs the error and ends the run cleanly.
+	 * back its transaction before, run() logs the error and ends the run cleanly. Only the deletion itself is in
+	 * that transaction: an error in the steps after the core's commit (update_posted_info, sync, empty topics)
+	 * leaves the posts deleted, which the log entry names (sql_failure()).
 	 *
 	 * @param array	$rows			post_id + post_visibility of the posts to delete
 	 * @param bool	$count_sync		Reduce the authors' post counts

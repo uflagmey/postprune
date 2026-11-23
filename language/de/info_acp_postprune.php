@@ -59,6 +59,7 @@ $lang = array_merge($lang, [
 	'LOG_UFLAGMEY_PP_SCHEMA_MISMATCH'	=> '<strong>Post Prune: Datenbankschema passt nicht zum Cache – bitte Cache leeren</strong>',
 	'LOG_UFLAGMEY_PP_SKIPPED'			=> '<strong>Post Prune: Löschregel unbekannt bzw. Update unvollständig – Forum übersprungen</strong><br>» Forum „%1$s“: Die gespeicherten Einstellungen versteht diese Version nicht, es wurde nichts gelöscht. Einstellungen des Forums prüfen und speichern bzw. das Update abschließen (Erweiterung deaktivieren und wieder aktivieren).',
 	'LOG_UFLAGMEY_PP_SQL_ERROR'			=> '<strong>Post Prune: Datenbankfehler – Lauf beendet, nächster Versuch im nächsten Zyklus</strong><br>» %s',
+	'LOG_UFLAGMEY_PP_DELETE_ERROR'		=> '<strong>Post Prune: Datenbankfehler beim Löschen – Lauf beendet, nächster Versuch im nächsten Zyklus</strong><br>» Forum „%1$s“, Kandidaten dieses Laufs: %2$d. Ein Teil davon kann zu diesem Zeitpunkt bereits gelöscht sein; dann die Zähler des Forums abgleichen (ACP → Foren verwalten → „Synchronisieren“).<br>» %3$s',
 	'LOG_UFLAGMEY_PP_PRUNED_NO_TOPICS'	=> '<strong>Beitrags-Pruning</strong><br>» Forum „%1$s“: keine markierten Themen, es wurde nichts gelöscht',
 	'LOG_UFLAGMEY_PP_DRYRUN_KEEP_TOPIC'	=> [
 		0	=> '<strong>Trockenlauf: Beitrags-Pruning</strong><br>» Im %3$d markierten Thema im Forum „%1$s“ würde kein Beitrag gelöscht (neueste %4$d je Thema behalten)',
