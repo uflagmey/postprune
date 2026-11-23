@@ -20,6 +20,9 @@ class pruner
 	/** @var string Config value (dynamic, m4_cursor): last topic the active run finished under rule "count"; 0: start of a cycle */
 	const CURSOR = 'uflagmey_pp_cursor';
 
+	/** Characters trim() strips by default up to PHP 8.5 */
+	const TRIM_CHARS = " \n\r\t\v\x00";
+
 	/**
 	 * @var int Rule "count", dry run and preview: topics per count query (rc1: no statement with thousands of OR
 	 *			terms). Small on purpose: on MariaDB with outdated index statistics (e.g. after a bulk import) larger
@@ -648,11 +651,12 @@ class pruner
 	protected function sql_failure(array $pruned, array $dryrun, array $delete = [])
 	{
 		$error = $this->db->get_sql_error_returned();
-		$message = trim(strip_tags(is_array($error) && isset($error['message']) ? (string) $error['message'] : ''));
+		// Explicit characters: the default of trim() also strips \f from PHP 8.6 on (PHPCompatibility, testVersion 7.2-)
+		$message = trim(strip_tags(is_array($error) && isset($error['message']) ? (string) $error['message'] : ''), self::TRIM_CHARS);
 		$message .= ($message !== '' && is_array($error) && !empty($error['code'])) ? ' [' . $error['code'] . ']' : '';
 		if ($delete)
 		{
-			$message = ($message !== '') ? $message : trim(strip_tags((string) $delete[2]));
+			$message = ($message !== '') ? $message : trim(strip_tags((string) $delete[2]), self::TRIM_CHARS);
 			$this->add_log('LOG_UFLAGMEY_PP_DELETE_ERROR', [$delete[0], (int) $delete[1], utf8_htmlspecialchars(utf8_substr($message, 0, 255))], 'critical');
 		}
 		else if ($this->columns_missing())
